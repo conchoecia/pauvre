@@ -20,6 +20,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as mplpatches
+from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import pandas as pd
 import os.path as opath
@@ -66,10 +67,24 @@ def marginplot(args):
     #R=np.linspace(65/255,1,101)
     #G=np.linspace(0/255, 231/255, 101)
     #B=np.linspace(85/255, 34/255, 101)
-    Alpha=np.linspace(0,1,101)
-    R=np.linspace(1, 65/255,101)
-    G=np.linspace(1, 0/255, 101)
-    B=np.linspace(1, 85/255, 101)
+
+    #R=65/255, G=0/255, B=85/255
+    Rf=65/255
+    Bf=85/255
+    pdict = {'red':  ((0.0, Rf, Rf),
+                       (1.0, Rf, Rf)),
+              'green': ((0.0, 0.0, 0.0),
+                        (1.0, 0.0, 0.0)),
+              'blue':  ((0.0, Bf, Bf),
+                        (1.0, Bf, Bf)),
+              'alpha':  ((0.0, 0.0, 0.0),
+                       (1.0, 1.0, 1.0))
+             }
+    # Now we will use this example to illustrate 3 ways of
+    # handling custom colormaps.
+    # First, the most direct and explicit:
+    purple1 = LinearSegmentedColormap('Purple1', pdict)
+
 
     length = []
     meanQual = []
@@ -83,16 +98,17 @@ def marginplot(args):
     #only keep the dataframes that are finite
     df = df.dropna()
 
-    hist = {}
-    #create the histogram for plotting the interior
-    for lengthStep in np.arange(0,len(lengthBinsBig) - 1,1):
-        for qualStep in np.arange(0, len(qualBinsBig) - 1 ,1):
-            lengthMin = lengthBinsBig[lengthStep]
-            lengthMax = lengthBinsBig[lengthStep + 1]
-            qualMin = qualBinsBig[qualStep]
-            qualMax = qualBinsBig[qualStep + 1]
-            hist[(qualMin, lengthMin)] = len(df.query('length>={} and length<{} and meanQual>={} and meanQual<{}'.format(
-                lengthMin, lengthMax, qualMin, qualMax)))
+    # I think I can delete this whole block
+    # hist = {}
+    # #create the histogram for plotting the interior
+    # for lengthStep in np.arange(0,len(lengthBinsBig) - 1,1):
+    #     for qualStep in np.arange(0, len(qualBinsBig) - 1 ,1):
+    #         lengthMin = lengthBinsBig[lengthStep]
+    #         lengthMax = lengthBinsBig[lengthStep + 1]
+    #         qualMin = qualBinsBig[qualStep]
+    #         qualMax = qualBinsBig[qualStep + 1]
+    #         hist[(qualMin, lengthMin)] = len(df.query('length>={} and length<{} and meanQual>={} and meanQual<{}'.format(
+    #             lengthMin, lengthMax, qualMin, qualMax)))
 
     #set the figure dimensions
     figWidth = 1.61*3
@@ -206,23 +222,36 @@ def marginplot(args):
     qualPanel.spines['left'].set_visible(False)
     qualPanel.set_xlabel('Phred Quality')
 
-    # plot the colors
+
+    #plot the length histogram on x-axis
+    hexThis = df.query('length<{} and meanQual<{}'.format(
+                       args.maxlen,args.maxqual))
+    #print(hexThis)
+
+    panel0.set_xlim([0, qualBinAmount])
+    panel0.set_ylim([0, lengthBinAmount])
+    #This single line controls plotting the hex bins in the panel
+    hexvals = panel0.hexbin(hexThis['meanQual'], hexThis['length'], gridsize=49,
+                            linewidths=0.0, cmap=purple1)
+    counts = hexvals.get_array()
+    print("Num reads: {}".format(len(length)))
+
+
+    # plot the colorbar
+    # completely custom for more control
     colorPanel.set_xlim([0,1])
-    colorPanel.set_ylim([0,101])
-    colorPanel.set_yticks([0,20,40,60,80,100])
-    colorPanel.set_yticklabels( [int(x) for x in np.linspace(0,max(hist.values()), 6)] )
-    for i in np.arange(0,101,1):
-        if args.transparent:
-            alpha=Alpha[i]
-            facec=(R[-1],G[-1],B[-1])
-        else:
-            alpha=1
-            facec=(R[i],G[i],B[i])
+    colorPanel.set_ylim([0,1000])
+    colorPanel.set_yticks([int(x) for x in np.linspace(0, 1000, 6)])
+    colorPanel.set_yticklabels( [int(x) for x in np.linspace(0,max(counts), 6)] )
+    for i in np.arange(0,1001,1):
+        rgba = purple1(i/1001)
+        alpha=rgba[-1]
+        facec=rgba[0:3]
         rectangle1=mplpatches.Rectangle((0,i),1,1,\
-                                        linewidth=0.0,\
-                                        facecolor=facec,\
-                                        edgecolor=(0,0,0),\
-                                        alpha=alpha)
+                                    linewidth=0.0,\
+                                    facecolor=facec,\
+                                    edgecolor=(0,0,0),\
+                                    alpha=alpha)
         colorPanel.add_patch(rectangle1)
     colorPanel.spines['top'].set_visible(False)
     colorPanel.spines['left'].set_visible(False)
@@ -230,27 +259,6 @@ def marginplot(args):
     colorPanel.yaxis.set_label_position("right")
     colorPanel.set_ylabel('Number of Reads')
 
-    #plot the length histogram on x-axis
-    maxHistVal = max(hist.values())
-    panel0.set_xlim([0, qualBinAmount])
-    panel0.set_ylim([0, lengthBinAmount])
-    for key in hist:
-        minQual = key[0]
-        minLength =  key[1]
-        i = int((hist[key]/maxHistVal) * 100)
-        #(left, bottom), width, height
-        if args.transparent:
-            alpha=Alpha[i]
-            facec=(R[-1],G[-1],B[-1])
-        else:
-            alpha=1
-            facec=(R[i],G[i],B[i])
-        rectangle1=mplpatches.Rectangle((minQual,minLength),qualBinInterval*4,lengthBinInterval*4,\
-                                        linewidth=0.0,\
-                                        facecolor=facec,\
-                                        edgecolor=(0,0,0),\
-                                        alpha=alpha)
-        panel0.add_patch(rectangle1)
 
     for each in panel0.spines:
         panel0.spines[each].set_visible(False)
