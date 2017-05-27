@@ -28,7 +28,8 @@ This package currently hosts one script for plotting.
 - `marginplot`
   - Make a marginal histogram for ONT 2D or 1D^2 cDNA data with a
     lower maxlen and higher maxqual.
-    - `pauvre marginplot --maxlen 4000 --maxqual 25 <myfile>.fastq`
+    - `pauvre marginplot --maxlen 4000 --maxqual 25 --lengthbin 50 --fileform pdf png --qualbin 0.5 --fastq miniDSMN15.fastq`
+    - ![example1](files/miniDSMN15.png)
   - Plot ONT 1D data with a large tail
     - `pauvre marginplot --maxlen 100000 --maxqual 15 --lengthbin 500  <myfile>.fastq`
   - Get more resolution on lengths
@@ -38,8 +39,6 @@ This package currently hosts one script for plotting.
     - Note: transparency is the default behavior
 
 ![transparency](files/transparency.001.jpeg)
-
-
 
 # Contributors
 
