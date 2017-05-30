@@ -8,7 +8,7 @@ This package currently hosts one script for plotting.
 
 ## Updates:
 - 20170529 - added automatic scaling to the input fastq file. It
-  scales to show the highest quality reads and the top 99th percentile
+  scales to show the highest read quality and the top 99th percentile
   of reads by length.
 
 # Requirements
