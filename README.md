@@ -4,7 +4,12 @@ This package currently hosts one script for plotting.
 
 - `pauvre marginplot`
   - takes a fastq file as input and outputs a marginal histogram with a heatmap.
-  - transparency is the default
+- transparency is the default
+
+## Updates:
+- 20170529 - added automatic scaling to the input fastq file. It
+  scales to show the highest quality reads and the top 99th percentile
+  of reads by length.
 
 # Requirements
 
@@ -37,8 +42,7 @@ This package currently hosts one script for plotting.
   - Turn off transparency if you just want a white background
     - `pauvre marginplot --transparent False <myfile>.fastq`
     - Note: transparency is the default behavior
-
-![transparency](files/transparency.001.jpeg)
+      - ![transparency](files/transparency.001.jpeg)
 
 # Contributors
 

@@ -94,30 +94,28 @@ def main():
                                inside title.""")
     parser_mnplot.add_argument('--maxlen',
                                metavar='MAXLEN',
-                               default=20000,
                                type=int,
                                help="""This sets the max read length to plot.""")
     parser_mnplot.add_argument('--maxqual',
                                metavar='MAXQUAL',
-                               default=25,
                                type=int,
                                help="""This sets the max mean read quality
                                to plot.""")
     parser_mnplot.add_argument('--lengthbin',
                                metavar='LENGTHBIN',
-                               default=50,
                                type=int,
                                help="""This sets the bin size to use for length.""")
     parser_mnplot.add_argument('--qualbin',
                                metavar='QUALBIN',
-                               default=0.1,
                                type=float,
                                help="""This sets the bin size to use for quality""")
     parser_mnplot.add_argument('--fileform',
                                dest='fileform',
                                metavar='STRING',
-                               choices=['png','pdf'],
-                               default='png',
+                               choices=['png','pdf', 'eps', 'jpeg', 'jpg',
+                                        'pdf', 'pgf', 'ps', 'raw', 'rgba',
+                                        'svg', 'svgz', 'tif', 'tiff'],
+                               default=['png'],
                                nargs='+',
                                help='Which output format would you like? Def.=png')
     parser_mnplot.add_argument('--dpi',

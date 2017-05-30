@@ -45,23 +45,47 @@ rcParams.update({
     'ytick.minor.pad'     : 2        ,
     'savefig.dpi'         : 600      ,
     'axes.linewidth'      : 0.75     ,
-    'text.usetex'         : True     ,
-    'text.latex.unicode'  : True     })
+    'text.usetex'         : False     ,
+    'text.latex.unicode'  : False     })
 
 #logging
 import logging
 logger = logging.getLogger('pauvre')
 
 def marginplot(args):
-    lengthBinAmount = args.maxlen
-    lengthBinInterval = args.lengthbin
-    lengthBins=np.arange(0,lengthBinAmount,lengthBinInterval)
-    lengthBinsBig=np.arange(0,lengthBinAmount,lengthBinInterval * 4)
 
-    qualBinAmount = args.maxqual
-    qualBinInterval = args.qualbin
-    qualBins=np.arange(0, qualBinAmount, qualBinInterval)
-    qualBinsBig=np.arange(0, qualBinAmount, qualBinInterval*4)
+    length = []
+    meanQual = []
+    with open(args.fastq,"r") as handle:
+        for record in SeqIO.parse(handle, "fastq"):
+            if len(record) > 0 and np.mean(record.letter_annotations["phred_quality"]) > 0:
+                meanQual.append(np.mean(record.letter_annotations["phred_quality"]))
+                length.append(len(record))
+
+    if args.maxlen:
+        maxPlotLength = args.maxlen
+    else:
+        maxPlotLength = int(np.percentile(length, 99))
+
+    if args.lengthbin:
+        lengthBinInterval = args.lengthbin
+    else:
+        #Dividing by 80 is based on what looks good from experience
+        lengthBinInterval = int(maxPlotLength/80)
+    lengthBins=np.arange(0,maxPlotLength,lengthBinInterval)
+    lengthBinsBig=np.arange(0,maxPlotLength,lengthBinInterval * 4)
+
+    if args.maxqual:
+        maxPlotQual = args.maxqual
+    else:
+        maxPlotQual = max(np.ceil(meanQual))
+    if args.qualbin:
+        qualBinInterval = args.qualbin
+    else:
+        #again, this is just based on what looks good from experience
+        qualBinInterval = maxPlotQual/85
+    qualBins=np.arange(0, maxPlotQual, qualBinInterval)
+    qualBinsBig=np.arange(0, maxPlotQual, qualBinInterval*4)
     #250, 231, 34 light yellow
     #67, 1, 85
     #R=np.linspace(65/255,1,101)
@@ -86,13 +110,7 @@ def marginplot(args):
     purple1 = LinearSegmentedColormap('Purple1', pdict)
 
 
-    length = []
-    meanQual = []
-    with open(args.fastq,"r") as handle:
-        for record in SeqIO.parse(handle, "fastq"):
-            if len(record) > 0 and np.mean(record.letter_annotations["phred_quality"]) > 0:
-                meanQual.append(np.mean(record.letter_annotations["phred_quality"]))
-                length.append(len(record))
+
     #make the pandas dataset to query
     df = pd.DataFrame(list(zip(length, meanQual)), columns=['length', 'meanQual'])
     #only keep the dataframes that are finite
@@ -183,7 +201,7 @@ def marginplot(args):
 
     #plot the length histogram on y-axis
     lengthBinsValues,bins2=np.histogram(length,lengthBins)
-    lengthPanel.set_ylim([0, lengthBinAmount])
+    lengthPanel.set_ylim([0, maxPlotLength])
     lengthPanel.set_xlim([0, max(lengthBinsValues * 1.1)])
 
     for step in np.arange(0,len(lengthBinsValues),1):
@@ -205,7 +223,7 @@ def marginplot(args):
     #plot the length histogram on x-axis
     qualBinsValues,bins2=np.histogram(meanQual, qualBins)
     qualPanel.set_ylim([0, max(qualBinsValues * 1.1)])
-    qualPanel.set_xlim([0, qualBinAmount])
+    qualPanel.set_xlim([0, maxPlotQual])
     for step in np.arange(0,len(qualBinsValues),1):
         left=qualBins[step]
         bottom=0
@@ -225,11 +243,11 @@ def marginplot(args):
 
     #plot the length histogram on x-axis
     hexThis = df.query('length<{} and meanQual<{}'.format(
-                       args.maxlen,args.maxqual))
+                       maxPlotLength,maxPlotQual))
     #print(hexThis)
 
-    panel0.set_xlim([0, qualBinAmount])
-    panel0.set_ylim([0, lengthBinAmount])
+    panel0.set_xlim([0, maxPlotQual])
+    panel0.set_ylim([0, maxPlotLength])
     #This single line controls plotting the hex bins in the panel
     hexvals = panel0.hexbin(hexThis['meanQual'], hexThis['length'], gridsize=49,
                             linewidths=0.0, cmap=purple1)
@@ -264,7 +282,7 @@ def marginplot(args):
         panel0.spines[each].set_visible(False)
 
     filebase = opath.splitext(opath.basename(args.fastq))[0]
-    print(filebase)
+
     for each in args.fileform:
         outname = "{}.{}".format(filebase, each)
         if each == 'png':
