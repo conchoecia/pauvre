@@ -31,6 +31,9 @@ This package currently hosts one script for plotting.
 
 # Usage
 - `marginplot`
+  - Make the default plot showing the 99th percentile of longest reads
+    - `pauvre marginplot --fastq miniDSMN15.fastq`
+    - ![default](files/default_miniDSMN15.png)
   - Make a marginal histogram for ONT 2D or 1D^2 cDNA data with a
     lower maxlen and higher maxqual.
     - `pauvre marginplot --maxlen 4000 --maxqual 25 --lengthbin 50 --fileform pdf png --qualbin 0.5 --fastq miniDSMN15.fastq`
