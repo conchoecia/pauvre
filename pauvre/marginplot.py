@@ -56,11 +56,13 @@ def marginplot(args):
 
     length = []
     meanQual = []
+    nbases = 0
     with open(args.fastq,"r") as handle:
         for record in SeqIO.parse(handle, "fastq"):
             if len(record) > 0 and np.mean(record.letter_annotations["phred_quality"]) > 0:
                 meanQual.append(np.mean(record.letter_annotations["phred_quality"]))
                 length.append(len(record))
+                nbases += len(record)
 
     if args.maxlen:
         maxPlotLength = args.maxlen
@@ -158,7 +160,7 @@ def marginplot(args):
                      lengthPanelWidth/figHeight])     #height
     qualPanel.tick_params(axis='both',which='both',\
                        bottom='on', labelbottom='on',\
-                       left='off', labelleft='off', \
+                       left='on', labelleft='on', \
                        right='off', labelright='off',\
                        top='off', labeltop='off')
     panels.append(qualPanel)
@@ -171,7 +173,7 @@ def marginplot(args):
                        bottom='off', labelbottom='off',\
                        left='on', labelleft='on', \
                        right='off', labelright='off',\
-                       top='off', labeltop='off')
+                       top='on', labeltop='on')
     panels.append(lengthPanel)
 
 
@@ -215,7 +217,7 @@ def marginplot(args):
                                         facecolor=(0.5,0.5,0.5),\
                                         edgecolor=(0,0,0))
         lengthPanel.add_patch(rectangle1)
-    lengthPanel.spines['top'].set_visible(False)
+    lengthPanel.spines['top'].set_visible(True)
     lengthPanel.spines['right'].set_visible(False)
     lengthPanel.spines['bottom'].set_visible(False)
     lengthPanel.set_ylabel('Read Length')
@@ -237,8 +239,9 @@ def marginplot(args):
         qualPanel.add_patch(rectangle1)
     qualPanel.spines['top'].set_visible(False)
     qualPanel.spines['right'].set_visible(False)
-    qualPanel.spines['left'].set_visible(False)
+    qualPanel.spines['left'].set_visible(True)
     qualPanel.set_xlabel('Phred Quality')
+    qualPanel.set_ylabel('Count')
 
 
     #plot the length histogram on x-axis
@@ -252,7 +255,8 @@ def marginplot(args):
     hexvals = panel0.hexbin(hexThis['meanQual'], hexThis['length'], gridsize=49,
                             linewidths=0.0, cmap=purple1)
     counts = hexvals.get_array()
-    print("Num reads: {}".format(len(length)))
+    print("N reads: {}".format(len(length)))
+    print("N bases: {:,}".format(nbases))
 
 
     # plot the colorbar
