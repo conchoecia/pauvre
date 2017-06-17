@@ -18,7 +18,9 @@
 # along with pauvre.  If not, see <http://www.gnu.org/licenses/>.
 
 import matplotlib
-matplotlib.use('agg')
+import platform
+if platform.system() == 'Linux':
+    matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mplpatches
 from matplotlib.colors import LinearSegmentedColormap

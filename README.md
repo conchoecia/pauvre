@@ -22,13 +22,13 @@ This package currently hosts one script for plotting.
 # Installation
 
 - Instructions to install on your mac or linux system. Not sure on
-  Windows! Make sure python 3 is the active environment before
+  Windows! Make sure *python 3* is the active environment before
   installing.
   - `git clone https://github.com/conchoecia/pauvre.git`
   - `cd ./pauvre`
-  - `pip install .`
+  - `pip3 install .`
 - Or, install with pip
-  - `pip install pauvre`
+  - `pip3 install pauvre`
 
 # Usage
 - `marginplot`
