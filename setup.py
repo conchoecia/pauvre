@@ -60,6 +60,8 @@ setup(name='pauvre',
       packages=find_packages(),
       install_requires=[
           "matplotlib",
+          "Bio",
+          "pandas"
       ],
       entry_points = {
             'console_scripts': ['pauvre=pauvre.pauvre_main:main'],
