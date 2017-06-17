@@ -16,6 +16,7 @@ This package currently hosts one script for plotting.
 - You must have the following installed on your system to install this software:
   - python 3.x
   - matplotlib
+  - biopython
   - pandas
 
 # Installation
