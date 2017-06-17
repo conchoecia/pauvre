@@ -60,7 +60,7 @@ setup(name='pauvre',
       packages=find_packages(),
       install_requires=[
           "matplotlib",
-          "Bio",
+          "biopython",
           "pandas"
       ],
       entry_points = {
