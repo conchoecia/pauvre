@@ -27,43 +27,18 @@ from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import pandas as pd
 import os.path as opath
-from matplotlib import rcParams
+from pauvre import rcparams
+from pauvre.functions import parse_fastq_length_meanqual
+from pauvre.stats import stats
 from Bio import SeqIO
-
-# This mpl style is from the UCSC BME163 class.
-rcParams.update({
-    'font.size'           : 8.0      ,
-    'font.sans-serif'     : 'Arial'    ,
-    'xtick.major.size'    : 2        ,
-    'xtick.major.width'   : 0.75     ,
-    'xtick.labelsize'     : 8.0      ,
-    'xtick.direction'     : 'out'      ,
-    'ytick.major.size'    : 2        ,
-    'ytick.major.width'   : 0.75     ,
-    'ytick.labelsize'     : 8.0      ,
-    'ytick.direction'     : 'out'      ,
-    'xtick.major.pad'     : 2        ,
-    'xtick.minor.pad'     : 2        ,
-    'ytick.major.pad'     : 2        ,
-    'ytick.minor.pad'     : 2        ,
-    'savefig.dpi'         : 600      ,
-    'axes.linewidth'      : 0.75     ,
-    'text.usetex'         : False     ,
-    'text.latex.unicode'  : False     })
 
 #logging
 import logging
 logger = logging.getLogger('pauvre')
 
 def marginplot(args):
-
-    length = []
-    meanQual = []
-    with open(args.fastq,"r") as handle:
-        for record in SeqIO.parse(handle, "fastq"):
-            if len(record) > 0 and np.mean(record.letter_annotations["phred_quality"]) > 0:
-                meanQual.append(np.mean(record.letter_annotations["phred_quality"]))
-                length.append(len(record))
+    length, meanQual = parse_fastq_length_meanqual(args.fastq)
+    stats(args.fastq, length, meanQual)
 
     if args.maxlen:
         maxPlotLength = args.maxlen
@@ -255,8 +230,6 @@ def marginplot(args):
     hexvals = panel0.hexbin(hexThis['meanQual'], hexThis['length'], gridsize=49,
                             linewidths=0.0, cmap=purple1)
     counts = hexvals.get_array()
-    print("Num reads: {}".format(len(length)))
-
 
     # plot the colorbar
     # completely custom for more control

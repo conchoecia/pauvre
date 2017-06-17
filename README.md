@@ -31,7 +31,40 @@ This package currently hosts one script for plotting.
   - `pip3 install pauvre`
 
 # Usage
+- `stats`
+  - generate basic statistics about the fastq file. For example, if I
+    want to know the number of bases and reads with AT LEAST PHRED
+    score 5 and AT LEAST length of 500, I can run the program as you
+    see below and look at the cells highlighted with <braces>.
+    - `pauvre marginplot --fastq miniDSMN15.fastq`
+
+
+```
+numReads: 1000
+numBasepairs: 1029114
+meanLen: 1029.114
+medianLen: 875.5
+minLen: 11
+maxLen: 5337
+N50: 1278
+L50: 296
+
+                      Basepairs >= bin by mean PHRED and length
+minLen       Q0       Q5     Q10     Q15   Q17.5    Q20  Q21.5   Q25  Q25.5  Q30
+     0  1029114  1010681  935366  429279  143948  25139   3668  2938   2000    0
+   500   984212  <968653> 904787  421307  142003  24417   3668  2938   2000    0
+  1000   659842   649319  616788  300948  103122  17251   2000  2000   2000    0
+ et cetera...
+              Number of reads >= bin by mean Phred+Len
+minLen    Q0   Q5  Q10  Q15  Q17.5  Q20  Q21.5  Q25  Q25.5  Q30
+     0  1000  969  865  366    118   22      3    2      1    0
+   500   873 <859> 789  347    113   20      3    2      1    0
+  1000   424  418  396  187     62   11      1    1      1    0
+ et cetera...
+```
+
 - `marginplot`
+  - automatically calls `pauvre stats` for each fastq file
   - Make the default plot showing the 99th percentile of longest reads
     - `pauvre marginplot --fastq miniDSMN15.fastq`
     - ![default](files/default_miniDSMN15.png)
