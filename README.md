@@ -33,9 +33,9 @@ This package currently hosts one script for plotting.
 # Usage
 - `stats`
   - generate basic statistics about the fastq file. For example, if I
-    want to know the number of bases and reads with AT LEAST PHRED
-    score 5 and AT LEAST length of 500, I can run the program as you
-    see below and look at the cells highlighted with <braces>.
+    want to know the number of bases and reads with AT LEAST a PHRED
+    score of 5 and AT LEAST a read length of 500, run the program as below 
+    and look at the cells highlighted with <braces>.
     - `pauvre marginplot --fastq miniDSMN15.fastq`
 
 
