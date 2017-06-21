@@ -77,34 +77,128 @@ def generate_panel(panel_left, panel_bottom, panel_width, panel_height,
     return panel
 
 
+def _generate_histogram_bin_patches(panel, bins, bin_values, horizontal=True):
+
+    l_width = 0.0
+    f_color = (0.5, 0.5, 0.5)
+    e_color = (0, 0, 0)
+    if horizontal:
+        for step in np.arange(0, len(bin_values), 1):
+            left = bins[step]
+            bottom = 0
+            width = bins[step + 1] - bins[step]
+            height = bin_values[step]
+
+            hist_rectangle = mplpatches.Rectangle((left, bottom), width, height,
+                                                  linewidth=l_width,
+                                                  facecolor=f_color,
+                                                  edgecolor=e_color)
+            panel.add_patch(hist_rectangle)
+
+    else:
+        for step in np.arange(0, len(bin_values), 1):
+            left = 1
+            bottom = bins[step]
+            width = bin_values[step]
+            height = bins[step + 1] - bins[step]
+
+            hist_rectangle = mplpatches.Rectangle((left, bottom), width, height,
+                                                  linewidth=l_width,
+                                                  facecolor=f_color,
+                                                  edgecolor=e_color)
+            panel.add_patch(hist_rectangle)
+
+
+def generate_histogram(panel, data_list, max_plot_length, bin_interval,
+                       hist_horizontal=True, left_spine=True,
+                       bottom_spine=True,
+                       top_spine=False, right_spine=False, x_label=None,
+                       y_label=None):
+
+    bins = np.arange(0, max_plot_length, bin_interval)
+
+    bin_values, bins2 = np.histogram(data_list, bins)
+
+    if hist_horizontal:
+        panel.set_xlim([0, max_plot_length])
+        panel.set_ylim([0, max(bin_values * 1.1)])
+    else:
+        panel.set_xlim([0, max(bin_values * 1.1)])
+        panel.set_ylim([0, max_plot_length])
+
+    # Generate histogram bin patches, depending on whether we're plotting
+    # vertically or horizontally
+    _generate_histogram_bin_patches(panel, bins, bin_values, hist_horizontal)
+
+    panel.spines['left'].set_visible(left_spine)
+    panel.spines['bottom'].set_visible(bottom_spine)
+    panel.spines['top'].set_visible(top_spine)
+    panel.spines['right'].set_visible(right_spine)
+
+    if y_label is not None:
+        panel.set_ylabel(y_label)
+    if x_label is not None:
+        panel.set_xlabel(x_label)
+
+
+def generate_heat_map(panel, data_frame, max_plot_length, max_plot_qual, color):
+    hex_this = data_frame.query('length<{} and meanQual<{}'.format(
+        max_plot_length, max_plot_qual))
+    # print(hexThis)
+
+    panel.set_xlim([0, max_plot_qual])
+    panel.set_ylim([0, max_plot_length])
+    # This single line controls plotting the hex bins in the panel
+    hex_vals = panel.hexbin(hex_this['meanQual'], hex_this['length'], gridsize=49,
+                            linewidths=0.0, cmap=color)
+    for each in panel.spines:
+        panel.spines[each].set_visible(False)
+
+    counts = hex_vals.get_array()
+    return counts
+
+
+def generate_legend(panel, counts, color):
+
+    # completely custom for more control
+    panel.set_xlim([0, 1])
+    panel.set_ylim([0, 1000])
+    panel.set_yticks([int(x) for x in np.linspace(0, 1000, 6)])
+    panel.set_yticklabels([int(x) for x in np.linspace(0, max(counts), 6)])
+    for i in np.arange(0, 1001, 1):
+        rgba = color(i / 1001)
+        alpha = rgba[-1]
+        facec = rgba[0:3]
+        hist_rectangle = mplpatches.Rectangle((0, i), 1, 1,
+                                              linewidth=0.0,
+                                              facecolor=facec,
+                                              edgecolor=(0, 0, 0),
+                                              alpha=alpha)
+        panel.add_patch(hist_rectangle)
+    panel.spines['top'].set_visible(False)
+    panel.spines['left'].set_visible(False)
+    panel.spines['bottom'].set_visible(False)
+    panel.yaxis.set_label_position("right")
+    panel.set_ylabel('Number of Reads')
+
+
+def print_images(base_output_name, image_formats, dpi, transparent=False):
+    file_base = opath.splitext(opath.basename(base_output_name))[0]
+
+    for fmt in image_formats:
+        out_name = "{}.{}".format(file_base, fmt)
+        if fmt == 'png':
+            plt.savefig(out_name, dpi=dpi, transparent=transparent)
+        else:
+            plt.savefig(out_name, format=fmt, transparent=transparent)
+
+
 def margin_plot(args):
+
     rc.update_rcParams()
-    length, mean_qual = parse_fastq_length_meanqual(args.fastq)
-    stats(args.fastq, length, mean_qual)
+    read_lengths, read_mean_quals = parse_fastq_length_meanqual(args.fastq)
+    stats(args.fastq, read_lengths, read_mean_quals)
 
-    if args.maxlen:
-        max_plot_length = args.maxlen
-    else:
-        max_plot_length = int(np.percentile(length, 99))
-
-    if args.lengthbin:
-        length_bin_interval = args.lengthbin
-    else:
-        # Dividing by 80 is based on what looks good from experience
-        length_bin_interval = int(max_plot_length / 80)
-
-    length_bins = np.arange(0, max_plot_length, length_bin_interval)
-
-    if args.maxqual:
-        max_plot_qual = args.maxqual
-    else:
-        max_plot_qual = max(np.ceil(mean_qual))
-    if args.qualbin:
-        qual_bin_interval = args.qualbin
-    else:
-        # again, this is just based on what looks good from experience
-        qual_bin_interval = max_plot_qual / 85
-    qual_bins = np.arange(0, max_plot_qual, qual_bin_interval)
 
     # 250, 231, 34 light yellow
     # 67, 1, 85
@@ -130,7 +224,7 @@ def margin_plot(args):
     purple1 = LinearSegmentedColormap('Purple1', pdict)
 
     # make the pandas dataset to query
-    df = pd.DataFrame(list(zip(length, mean_qual)), columns=['length', 'meanQual'])
+    df = pd.DataFrame(list(zip(read_lengths, read_mean_quals)), columns=['length', 'meanQual'])
     # only keep the dataframes that are finite
     df = df.dropna()
 
@@ -207,97 +301,61 @@ def margin_plot(args):
                                   label_right_tick_param='on')
     panels.append(legend_panel)
 
-    # plot the length histogram on y-axis
-    length_bins_values, bins2 = np.histogram(length, length_bins)
-    length_panel.set_ylim([0, max_plot_length])
-    length_panel.set_xlim([0, max(length_bins_values * 1.1)])
+    # Set max length
+    if args.maxlen:
+        max_plot_length = args.maxlen
+    else:
+        max_plot_length = int(np.percentile(read_lengths, 99))
 
-    for step in np.arange(0, len(length_bins_values), 1):
-        left = 1
-        bottom = length_bins[step]
-        width = length_bins_values[step]
-        height = length_bins[step + 1] - length_bins[step]
+    # Set length bin sizes
+    if args.lengthbin:
+        length_bin_interval = args.lengthbin
+    else:
+        # Dividing by 80 is based on what looks good from experience
+        length_bin_interval = int(max_plot_length / 80)
 
-        rectangle1 = mplpatches.Rectangle((left, bottom), width, height,
-                                          linewidth=0.0,
-                                          facecolor=(0.5, 0.5, 0.5),
-                                          edgecolor=(0, 0, 0))
-        length_panel.add_patch(rectangle1)
-    length_panel.spines['top'].set_visible(False)
-    length_panel.spines['right'].set_visible(False)
-    length_panel.spines['bottom'].set_visible(True)
-    length_panel.set_ylabel('Read Length')
+    # length_bins = np.arange(0, max_plot_length, length_bin_interval)
 
-    # plot the length histogram on x-axis
-    qual_bins_values, bins2 = np.histogram(mean_qual, qual_bins)
-    qual_panel.set_ylim([0, max(qual_bins_values * 1.1)])
-    qual_panel.set_xlim([0, max_plot_qual])
-    for step in np.arange(0, len(qual_bins_values), 1):
-        left = qual_bins[step]
-        bottom = 0
-        width = qual_bins[step + 1] - qual_bins[step]
-        height = qual_bins_values[step]
+    # Set max quality
+    if args.maxqual:
+        max_plot_qual = args.maxqual
+    else:
+        max_plot_qual = max(np.ceil(read_mean_quals))
 
-        rectangle1 = mplpatches.Rectangle((left, bottom), width, height,
-                                          linewidth=0.0,
-                                          facecolor=(0.5, 0.5, 0.5),
-                                          edgecolor=(0, 0, 0))
-        qual_panel.add_patch(rectangle1)
-    qual_panel.spines['top'].set_visible(False)
-    qual_panel.spines['right'].set_visible(False)
-    qual_panel.spines['left'].set_visible(True)
-    qual_panel.set_xlabel('Phred Quality')
-    qual_panel.set_ylabel('Count')
+    # Set qual bin sizes
+    if args.qualbin:
+        qual_bin_interval = args.qualbin
+    else:
+        # again, this is just based on what looks good from experience
+        qual_bin_interval = max_plot_qual / 85
+    qual_bins = np.arange(0, max_plot_qual, qual_bin_interval)
 
-    # plot the length histogram on x-axis
-    hex_this = df.query('length<{} and meanQual<{}'.format(
-        max_plot_length, max_plot_qual))
-    # print(hexThis)
+    # Generate length histogram
+    generate_histogram(length_panel, read_lengths, max_plot_length,
+                       length_bin_interval, hist_horizontal=False,
+                       y_label='Read Length')
 
-    heat_map_panel.set_xlim([0, max_plot_qual])
-    heat_map_panel.set_ylim([0, max_plot_length])
-    # This single line controls plotting the hex bins in the panel
-    hex_vals = heat_map_panel.hexbin(hex_this['meanQual'], hex_this['length'], gridsize=49,
-                            linewidths=0.0, cmap=purple1)
-    counts = hex_vals.get_array()
+    # Generate quality histogram
+    generate_histogram(qual_panel, read_mean_quals, max_plot_qual,
+                       qual_bin_interval, x_label='Phred Quality',
+                       y_label='Count')
 
-    # plot the colorbar
-    # completely custom for more control
-    legend_panel.set_xlim([0, 1])
-    legend_panel.set_ylim([0, 1000])
-    legend_panel.set_yticks([int(x) for x in np.linspace(0, 1000, 6)])
-    legend_panel.set_yticklabels([int(x) for x in np.linspace(0, max(counts), 6)])
-    for i in np.arange(0, 1001, 1):
-        rgba = purple1(i / 1001)
-        alpha = rgba[-1]
-        facec = rgba[0:3]
-        rectangle1 = mplpatches.Rectangle((0, i), 1, 1,
-                                          linewidth=0.0,
-                                          facecolor=facec,
-                                          edgecolor=(0, 0, 0),
-                                          alpha=alpha)
-        legend_panel.add_patch(rectangle1)
-    legend_panel.spines['top'].set_visible(False)
-    legend_panel.spines['left'].set_visible(False)
-    legend_panel.spines['bottom'].set_visible(False)
-    legend_panel.yaxis.set_label_position("right")
-    legend_panel.set_ylabel('Number of Reads')
+    # Generate heat map
+    counts = generate_heat_map(heat_map_panel, df, max_plot_length,
+                               max_plot_qual, purple1)
 
-    for each in heat_map_panel.spines:
-        heat_map_panel.spines[each].set_visible(False)
+    # Generate legend
+    generate_legend(legend_panel, counts, purple1)
 
-    file_base = opath.splitext(opath.basename(args.fastq))[0]
-
-    for each in args.fileform:
-        out_name = "{}.{}".format(file_base, each)
-        if each == 'png':
-
-            # transparent parameter not functioning. Need to fix.
-            plt.savefig(out_name, dpi=args.dpi, transparent=False)
-        else:
-            plt.savefig(out_name, transparent=args.transparent)
+    # Print image(s)
+    print(args.BASENAME)
+    if args.BASENAME is None:
+        file_base = opath.splitext(opath.basename(args.fastq))[0]
+    else:
+        file_base = args.BASENAME
+    transparent = args.TRANSPARENT
+    print_images(file_base, args.fileform, args.dpi, transparent)
 
 
 def run(args):
     margin_plot(args)
-    print(args.transparent)

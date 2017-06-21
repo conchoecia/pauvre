@@ -61,9 +61,10 @@ setup(name='pauvre',
       install_requires=[
           "matplotlib",
           "biopython",
+          "pillow",
           "pandas"
       ],
-      entry_points = {
+      entry_points={
             'console_scripts': ['pauvre=pauvre.pauvre_main:main'],
         },
       zip_safe=False,

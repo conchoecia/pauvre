@@ -77,17 +77,17 @@ def main():
     #############
     parser_mnplot = subparsers.add_parser('marginplot',
                                         help='plot a marginal histogram of a fastq file')
-    parser_mnplot.add_argument('--fastq',
+    parser_mnplot.add_argument('-f', '--fastq',
                                metavar='FASTQ',
                                action=FullPaths,
                                help='The input FASTQ file.')
-    parser_mnplot.add_argument('--transparent',
-                               metavar='TRANSPARENT',
-                               default=True,
-                               help="""Not the TV show. Set this to false if you
-                               don't want the default output to have
-                               transparency. Default is on.""")
-    parser_mnplot.add_argument('--title',
+    parser_mnplot.add_argument('-n', '--no-transparent',
+                               dest='TRANSPARENT',
+                               action='store_false',
+                               help="""Not the TV show. Specify this option if
+                               you don't want a transparent background. Default
+                               is on.""")
+    parser_mnplot.add_argument('-t', '--title',
                                metavar='TITLE',
                                default='Read length vs mean quality',
                                help="""This sets the title for the whole plot.
@@ -98,7 +98,7 @@ def main():
                                metavar='MAXLEN',
                                type=int,
                                help="""This sets the max read length to plot.""")
-    parser_mnplot.add_argument('--maxqual',
+    parser_mnplot.add_argument('-m', '--maxqual',
                                metavar='MAXQUAL',
                                type=int,
                                help="""This sets the max mean read quality
@@ -120,7 +120,12 @@ def main():
                                default=['png'],
                                nargs='+',
                                help='Which output format would you like? Def.=png')
-    parser_mnplot.add_argument('--dpi',
+    parser_mnplot.add_argument('-o', '--output-base-name',
+                               dest='BASENAME',
+                               help='Specify a base name for the output file('
+                                    's). The input file base name is the '
+                                    'default.')
+    parser_mnplot.add_argument('-d', '--dpi',
                                metavar='dpi',
                                default=600,
                                type=int,
@@ -186,7 +191,7 @@ def main():
     # If there were no args, but someone selected a program,
     #  print the program's help.
     if len(sys.argv)==2:
-        if   args.command == 'deathstar':
+        if args.command == 'deathstar':
             parser_dsplot.print_help()
         elif args.command == 'marginplot':
             parser_mnplot.print_help()
@@ -198,8 +203,8 @@ def main():
     try:
         args.func(parser, args)
     except IOError as e:
-         if e.errno != 32:  # ignore SIGPIPE
-             raise
+        if e.errno != 32:  # ignore SIGPIPE
+            raise
 
 if __name__ == "__main__":
     main()
