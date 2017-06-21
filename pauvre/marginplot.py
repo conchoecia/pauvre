@@ -38,8 +38,43 @@ if platform.system() == 'Linux':
 logger = logging.getLogger('pauvre')
 
 
-def generate_length_histogram_panel():
-    return
+def generate_panel(panel_left, panel_bottom, panel_width, panel_height,
+                   axis_tick_param='both', which_tick_param='both',
+                   bottom_tick_param='on', label_bottom_tick_param='on',
+                   left_tick_param='on', label_left_tick_param='on',
+                   right_tick_param='off', label_right_tick_param='off',
+                   top_tick_param='off', label_top_tick_param='off'):
+
+
+    """
+        Setting default panel tick parameters. Some of these are the defaults
+        for matplotlib anyway, but specifying them for readability. Here are
+        options and defaults for the parameters used below:
+
+        axis : {‘x’, ‘y’, ‘both’}; which axis to modify; default = 'both'
+        which : {‘major’, ‘minor’, ‘both’}; which ticks to modify;
+                default = 'major'
+        bottom, top, left, right : bool or {‘on’, ‘off’}; ticks on or off;
+        labelbottom, labeltop, labelleft, labelright : bool or {‘on’, ‘off’}
+     """
+
+    # create the panel
+    panel_rectangle = [panel_left, panel_bottom, panel_width, panel_height]
+    panel = plt.axes(panel_rectangle)
+
+    # Set tick parameters
+    panel.tick_params(axis=axis_tick_param,
+                      which=which_tick_param,
+                      bottom=bottom_tick_param,
+                      labelbottom=label_bottom_tick_param,
+                      left=left_tick_param,
+                      labelleft=label_left_tick_param,
+                      right=right_tick_param,
+                      labelright=label_right_tick_param,
+                      top=top_tick_param,
+                      labeltop=label_top_tick_param)
+
+    return panel
 
 
 def margin_plot(args):
@@ -109,7 +144,7 @@ def margin_plot(args):
     heat_map_panel_height = heat_map_panel_width * 0.62
 
     # find the margins to center the panel in figure
-    left_margin = bottom_margin = (1 / 6)
+    fig_left_margin = fig_bottom_margin = (1 / 6)
 
     # lengthPanel
     length_panel_width = (1 / 8)
@@ -124,70 +159,52 @@ def margin_plot(args):
     panels = []
 
     # Quality histogram panel
-    qual_panel_left = left_margin + length_panel_width + h_padding
-    qual_panel_bottom = bottom_margin
+    qual_panel_left = fig_left_margin + length_panel_width + h_padding
     qual_panel_width = heat_map_panel_width / fig_width
     qual_panel_height = length_panel_width * fig_width / fig_height
-    qual_panel_rec = [qual_panel_left, qual_panel_bottom,
-                      qual_panel_width, qual_panel_height]
-
-    qual_panel = plt.axes(qual_panel_rec)
-
-    qual_panel.tick_params(axis='both', which='both',
-                           bottom='on', labelbottom='on',
-                           left='on', labelleft='on',
-                           right='off', labelright='off',
-                           top='off', labeltop='off')
-
+    qual_panel = generate_panel(qual_panel_left,
+                                fig_bottom_margin,
+                                qual_panel_width,
+                                qual_panel_height)
     panels.append(qual_panel)
 
     # Length histogram panel
-    length_panel_left = left_margin
-    length_panel_bottom = bottom_margin + qual_panel_height + v_padding
+    length_panel_bottom = fig_bottom_margin + qual_panel_height + v_padding
     length_panel_height = heat_map_panel_height / fig_height
-    length_panel_rec = [length_panel_left, length_panel_bottom,
-                        length_panel_width, length_panel_height]
-
-    length_panel = plt.axes(length_panel_rec)
-
-    length_panel.tick_params(axis='both', which='both',
-                             bottom='on', labelbottom='on',
-                             left='on', labelleft='on',
-                             right='off', labelright='off',
-                             top='off', labeltop='off')
+    length_panel = generate_panel(fig_left_margin,
+                                  length_panel_bottom,
+                                  length_panel_width,
+                                  length_panel_height)
     panels.append(length_panel)
 
     # Heat map panel
-    heat_map_panel_left = left_margin + length_panel_width + h_padding
-    heat_map_panel_bottom = bottom_margin + qual_panel_height + v_padding
-    heat_map_panel_rec = [heat_map_panel_left, heat_map_panel_bottom,
-                          heat_map_panel_width / fig_width,
-                          heat_map_panel_height / fig_height]
-    heat_map_panel = plt.axes(heat_map_panel_rec)
+    heat_map_panel_left = fig_left_margin + length_panel_width + h_padding
+    heat_map_panel_bottom = fig_bottom_margin + qual_panel_height + v_padding
 
-    heat_map_panel.tick_params(axis='both', which='both',
-                               bottom='off', labelbottom='off',
-                               left='off', labelleft='off',
-                               right='off', labelright='off',
-                               top='off', labeltop='off')
-
+    heat_map_panel = generate_panel(heat_map_panel_left,
+                                    heat_map_panel_bottom,
+                                    heat_map_panel_width / fig_width,
+                                    heat_map_panel_height / fig_height,
+                                    bottom_tick_param='off',
+                                    label_bottom_tick_param='off',
+                                    left_tick_param='off',
+                                    label_left_tick_param='off')
     panels.append(heat_map_panel)
     heat_map_panel.set_title(args.title)
 
     # Legend panel
-    legend_panel_left = left_margin + length_panel_width + \
+    legend_panel_left = fig_left_margin + length_panel_width + \
                         heat_map_panel_width / fig_width + h_padding
-    legend_panel_bottom = bottom_margin + qual_panel_height + v_padding
+    legend_panel_bottom = fig_bottom_margin + qual_panel_height + v_padding
     legend_panel_height = heat_map_panel_height / fig_height
-    legend_panel_rec = [legend_panel_left, legend_panel_bottom,
-                        legend_panel_width, legend_panel_height]
-    legend_panel = plt.axes(legend_panel_rec)
-
-    legend_panel.tick_params(axis='both', which='both',
-                             bottom='off', labelbottom='off',
-                             left='off', labelleft='off',
-                             right='on', labelright='on',
-                             top='off', labeltop='off')
+    legend_panel = generate_panel(legend_panel_left, legend_panel_bottom,
+                                  legend_panel_width, legend_panel_height,
+                                  bottom_tick_param='off',
+                                  label_bottom_tick_param='off',
+                                  left_tick_param='off',
+                                  label_left_tick_param='off',
+                                  right_tick_param='on',
+                                  label_right_tick_param='on')
     panels.append(legend_panel)
 
     # plot the length histogram on y-axis
