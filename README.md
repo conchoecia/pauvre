@@ -18,6 +18,7 @@ This package currently hosts one script for plotting.
   - matplotlib
   - biopython
   - pandas
+  - pillow
 
 # Installation
 

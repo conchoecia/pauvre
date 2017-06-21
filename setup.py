@@ -64,7 +64,7 @@ setup(name='pauvre',
           "pandas >= 0.20.1",
           "numpy >= 1.12.1"
       ],
-      entry_points = {
+      entry_points={
             'console_scripts': ['pauvre=pauvre.pauvre_main:main'],
         },
       zip_safe=False,
