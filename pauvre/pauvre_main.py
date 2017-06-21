@@ -48,7 +48,7 @@ def run_subtool(parser, args):
         import pauvre.stats as submodule
 
     # run the chosen submodule.
-    submodule.run(parser, args)
+    submodule.run(args)
 
 class ArgumentParserWithDefaults(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
