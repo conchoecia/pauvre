@@ -250,6 +250,24 @@ def margin_plot(args):
     h_padding = 0.02
     v_padding = 0.05
 
+    # Set whether to include y-axes in histograms
+    if args.Y_AXES:
+        length_bottom_spine = True
+        length_bottom_tick = 'on'
+        length_bottom_label = 'on'
+        qual_left_spine = True
+        qual_left_tick = 'on'
+        qual_left_label = 'on'
+        qual_y_label = 'Count'
+    else:
+        length_bottom_spine = False
+        length_bottom_tick = 'off'
+        length_bottom_label = 'off'
+        qual_left_spine = False
+        qual_left_tick = 'off'
+        qual_left_label = 'off'
+        qual_y_label = None
+
     panels = []
 
     # Quality histogram panel
@@ -259,7 +277,9 @@ def margin_plot(args):
     qual_panel = generate_panel(qual_panel_left,
                                 fig_bottom_margin,
                                 qual_panel_width,
-                                qual_panel_height)
+                                qual_panel_height,
+                                left_tick_param=qual_left_tick,
+                                label_left_tick_param=qual_left_label)
     panels.append(qual_panel)
 
     # Length histogram panel
@@ -268,7 +288,9 @@ def margin_plot(args):
     length_panel = generate_panel(fig_left_margin,
                                   length_panel_bottom,
                                   length_panel_width,
-                                  length_panel_height)
+                                  length_panel_height,
+                                  bottom_tick_param=length_bottom_tick,
+                                  label_bottom_tick_param=length_bottom_label)
     panels.append(length_panel)
 
     # Heat map panel
@@ -331,14 +353,17 @@ def margin_plot(args):
     qual_bins = np.arange(0, max_plot_qual, qual_bin_interval)
 
     # Generate length histogram
+
+
     generate_histogram(length_panel, read_lengths, max_plot_length,
                        length_bin_interval, hist_horizontal=False,
-                       y_label='Read Length')
+                       y_label='Read Length', bottom_spine=length_bottom_spine)
 
     # Generate quality histogram
     generate_histogram(qual_panel, read_mean_quals, max_plot_qual,
                        qual_bin_interval, x_label='Phred Quality',
-                       y_label='Count')
+                       y_label=qual_y_label, left_spine=qual_left_spine)
+
 
     # Generate heat map
     counts = generate_heat_map(heat_map_panel, df, max_plot_length,
@@ -348,7 +373,6 @@ def margin_plot(args):
     generate_legend(legend_panel, counts, purple1)
 
     # Print image(s)
-    print(args.BASENAME)
     if args.BASENAME is None:
         file_base = opath.splitext(opath.basename(args.fastq))[0]
     else:

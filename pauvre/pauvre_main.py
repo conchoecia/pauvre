@@ -111,6 +111,10 @@ def main():
                                metavar='QUALBIN',
                                type=float,
                                help="""This sets the bin size to use for quality""")
+    parser_mnplot.add_argument('-y', '--add-yaxes',
+                               dest='Y_AXES',
+                               action='store_true',
+                               help='Add Y-axes to both marginal histograms.')
     parser_mnplot.add_argument('--fileform',
                                dest='fileform',
                                metavar='STRING',
