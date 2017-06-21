@@ -19,8 +19,8 @@
 
 # I took this code from https://github.com/arq5x/poretools/. Check it out. - DTS
 
-import os.path
 import sys
+import os.path
 import argparse
 
 #logger
@@ -44,6 +44,8 @@ def run_subtool(parser, args):
         import pauvre.marginplot as submodule
     elif args.command == 'deathstar':
         import pauvre.deathstar as submodule
+    elif args.command == 'stats':
+        import pauvre.stats as submodule
 
     # run the chosen submodule.
     submodule.run(parser, args)
@@ -69,8 +71,6 @@ def main():
     #########################################
     # create the individual tool parsers
     #########################################
-
-
 
     #############
     # marginplot
@@ -172,10 +172,21 @@ def main():
                                if you need it higher""")
     parser_dsplot.set_defaults(func=run_subtool)
 
+    #############
+    # stats
+    #############
+    parser_stats = subparsers.add_parser('stats',
+                                        help='outputs stats from a fastq file')
+    parser_stats.add_argument('-f', '--fastq',
+                               metavar='FASTQ',
+                               action=FullPaths,
+                               help='The input FASTQ file.')
+    parser_stats.set_defaults(func=run_subtool)
 
     #######################################################
     # parse the args and call the selected function
     #######################################################
+
     args = parser.parse_args()
 
     # If there were no args, print the help function
@@ -185,11 +196,12 @@ def main():
 
     # If there were no args, but someone selected a program,
     #  print the program's help.
+    commandDict={'deathstar' : parser_dsplot.print_help,
+                 'marginplot': parser_mnplot.print_help,
+                 'stats'     : parser_stats.print_help}
+
     if len(sys.argv)==2:
-        if   args.command == 'deathstar':
-            parser_dsplot.print_help()
-        elif args.command == 'marginplot':
-            parser_mnplot.print_help()
+        commandDict[args.command]()
         sys.exit(1)
 
     if args.quiet:
