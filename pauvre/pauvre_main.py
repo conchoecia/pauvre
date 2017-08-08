@@ -142,10 +142,19 @@ def main():
     #############
     parser_dsplot = subparsers.add_parser('deathstar',
                                         help='make a deathstar plot from a bam file')
-    parser_dsplot.add_argument('--sam',
-                               metavar='SAM',
+    parser_dsplot.add_argument('-M','--main_bam',
+                               metavar='mainbam',
                                action=FullPaths,
-                               help='The input filepath for the sam file to plot')
+                               help='The input filepath for the bam file to plot')
+    parser_dsplot.add_argument('-R','--rnaseq_bam',
+                               metavar='rnabam',
+                               action=FullPaths,
+                               help='The input filepath for the rnaseq bam file to plot')
+    parser_dsplot.add_argument('--gff',
+                               metavar='gff',
+                               action=FullPaths,
+                               help="""The input filepath for the gff annotation
+                               to plot""")
     parser_dsplot.add_argument('--fileform',
                                dest='fileform',
                                metavar='STRING',
@@ -165,20 +174,39 @@ def main():
                                dest='small_start',
                                choices=['inside', 'outside'],
                                default='inside',
-                               help="""This determines where the smallest of the
-                               filtered values will appear on the deathstar plot:
+                               help="""This determines where the shortest of the
+                               filtered reads will appear on the deathstar plot:
                                on the outside or on the inside?""")
     parser_dsplot.add_argument('--query',
                                dest='query',
                                default=['ALNLEN >= 10000','MAPLEN < reflength'],
                                nargs='+',
                                help='Query your reads to change plotting options')
+    parser_dsplot.add_argument('-d', '--doubled',
+                               dest='doubled',
+                               choices=['main','rnaseq'],
+                               default=[],
+                               nargs='+',
+                               help="""If your fasta file was doubled to map
+                               circularly, use this flag or you may encounter
+                               plotting errors. Accepts multiple arguments.
+                               'main' is for the sam file passed with --sam,
+                               'rnaseq' is for the sam file passed with --rnaseq""")
     parser_dsplot.add_argument('--dpi',
                                metavar='dpi',
                                default=600,
                                type=int,
                                help="""Change the dpi from the default 600
                                if you need it higher""")
+    parser_dsplot.add_argument('-I', '--interlace',
+                               action='store_true',
+                               default=False,
+                               help="""Interlace the reads so the pileup plot
+                                       looks better""")
+    parser_dsplot.add_argument('-L', '--log',
+                               action='store_true',
+                               default=False,
+                               help="""Plot the RNAseq track with a log scale""")
     parser_dsplot.set_defaults(func=run_subtool)
 
     #############

@@ -33,7 +33,6 @@ import logging
 if platform.system() == 'Linux':
     matplotlib.use('agg')
 
-
 # logging
 logger = logging.getLogger('pauvre')
 
@@ -187,10 +186,15 @@ def print_images(base_output_name, image_formats, dpi, transparent=False):
 
     for fmt in image_formats:
         out_name = "{}.{}".format(file_base, fmt)
-        if fmt == 'png':
-            plt.savefig(out_name, dpi=dpi, transparent=transparent)
-        else:
-            plt.savefig(out_name, format=fmt, transparent=transparent)
+        try:
+            if fmt == 'png':
+                plt.savefig(out_name, dpi=dpi, transparent=transparent)
+            else:
+                plt.savefig(out_name, format=fmt, transparent=transparent)
+        except PermissionError:
+            # thanks to https://github.com/wdecoster for the suggestion
+            print("""You don't have permission to save pauvre plots to this
+            directory. Try changing the directory and running the script again!""")
 
 
 def margin_plot(args):

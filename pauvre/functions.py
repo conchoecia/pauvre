@@ -33,6 +33,38 @@ def parse_fastq_length_meanqual(fastq):
     with open(fastq,"r") as handle:
         for record in SeqIO.parse(handle, "fastq"):
             if len(record) > 0 and np.mean(record.letter_annotations["phred_quality"]) > 0:
-                meanQual.append(np.mean(record.letter_annotations["phred_quality"]))
+                meanQual.append(_arithmetic_mean(record.letter_annotations["phred_quality"]))
                 length.append(len(record))
     return length, meanQual
+
+def _geometric_mean(phred_values):
+    """in case I want geometric mean in the future, can calculate it like this"""
+    #np.mean(record.letter_annotations["phred_quality"]))
+    pass
+
+def _arithmetic_mean(phred_values):
+    """
+    Convert Phred to 1-accuracy (error probabilities), calculate the arithmetic mean,
+    log transform back to Phred.
+    """
+    if not isinstance(phred_values, np.ndarray):
+        phred_values = np.array(phred_values)
+    return _erate_to_phred(np.mean(_phred_to_erate(phred_values)))
+
+def _phred_to_erate(phred_values):
+    """
+    converts a list or numpy array of phred values to a numpy array
+    of error rates
+    """
+    if not isinstance(phred_values, np.ndarray):
+        phred_values = np.array(phred_values)
+    return np.power(10, (-1 * phred_values)/10)
+
+def _erate_to_phred(erate_values):
+    """
+    converts a list or numpy array of error rates to a numpy array
+    of phred values
+    """
+    if not isinstance(erate_values, np.ndarray):
+        phred_values = np.array(erate_values)
+    return -10 * np.log10(erate_values)
