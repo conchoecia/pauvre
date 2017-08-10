@@ -38,6 +38,11 @@ class FullPaths(argparse.Action):
         setattr(namespace, self.dest,
                 os.path.abspath(os.path.expanduser(values)))
 
+class FullPathsList(argparse.Action):
+    """Expand user- and relative-paths"""
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest,
+                [os.path.abspath(os.path.expanduser(value)) for value in values])
 
 def run_subtool(parser, args):
     if args.command == 'marginplot':
@@ -46,7 +51,8 @@ def run_subtool(parser, args):
         import pauvre.deathstar as submodule
     elif args.command == 'stats':
         import pauvre.stats as submodule
-
+    elif args.command == 'synplot':
+        import pauvre.synplot as submodule
     # run the chosen submodule.
     submodule.run(args)
 
@@ -219,6 +225,48 @@ def main():
                                action=FullPaths,
                                help='The input FASTQ file.')
     parser_stats.set_defaults(func=run_subtool)
+
+    #############
+    # synplot
+    #############
+    parser_synplot = subparsers.add_parser('synplot',
+                                        help="""make a synteny plot from a gff
+                                        file, protein alignment, and partition
+                                        file""")
+    parser_synplot.add_argument('--gff_paths',
+                                metavar='gff_paths',
+                                action=FullPathsList,
+                                nargs = '+',
+                                help="""The input filepath for the gff annotation
+                                to plot""")
+    parser_synplot.add_argument('--dpi',
+                                metavar='dpi',
+                                default=600,
+                                type=int,
+                                help="""Change the dpi from the default 600
+                                if you need it higher""")
+    parser_synplot.add_argument('--optimum_order',
+                                action = 'store_true',
+                                help="""If selected, this doesn't plot the
+                                optimum arrangement of things as they are input
+                                into gff_paths. Instead, it uses the first gff
+                                file as the top-most sequence in the plot, and
+                                reorganizes the remaining gff files to minimize
+                                the number of intersections.""")
+    parser_synplot.add_argument('--aln_dir',
+                                metavar='aln_dir',
+                                action=FullPaths,
+                                help="""The directory where all the fasta
+                                alignments are contained.""")
+    parser_synplot.add_argument('--stop_codons',
+                                action='store_true',
+                                default = True,
+                                help="""Performs some internal corrections if
+                                the gff annotation includes the stop
+                                codons in the coding sequences.""")
+
+    parser_synplot.set_defaults(func=run_subtool)
+
 
     #######################################################
     # parse the args and call the selected function
