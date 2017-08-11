@@ -75,6 +75,11 @@ class GFFParse():
         """all this does is reset the features pandas dataframe"""
         self.features = new_features
 
+    def get_unique_genes(self):
+        """This returns a series of gene names"""
+        plottable = self.features.query("featType != 'tRNA' and featType != 'region' and featType != 'source'")
+        return set(plottable['name'].unique())
+
     def shuffle(self):
         """
         this returns a list of all possible shuffles of features.
@@ -90,31 +95,38 @@ class GFFParse():
         # zero
         done = False
         shuffle_features = self.features[self.features['featType'].isin(['gene', 'rRNA', 'CDS', 'tRNA'])].copy(deep=True)
-        #shuffle_features = self.features.copy(deep=True)
         # we first add the shuffle features without reorganizing
-        print("shuffle\n",shuffle_features)
+        #print("shuffle\n",shuffle_features)
         add_first = copy.deepcopy(self)
         add_first.set_features(shuffle_features)
         shuffles.append(add_first)
+        # first gene is changed with every iteration
         first_gene = list(shuffle_features['name'])[0]
+        # absolute first is the first gene in the original gff file, used to determine if we are done in this while loop
+        absolute_first = list(shuffle_features['name'])[0]
         while not done:
             # We need to prevent the case of shuffling in the middle of
             #  overlapped genes. Do this by ensuring that the the start of
             #  end of first gene is less than the start of the next gene.
             first_stop = int(shuffle_features.loc[shuffle_features['name'] == first_gene, 'stop'])
+            next_gene = ""
             for next_index in range(1, len(shuffle_features)):
-                # this block will fail sometimes if the next thing is a tRNA, so just skip it
-                try:
-                    next_gene = list(shuffle_features[shuffle_features['featType'].isin(['gene', 'rRNA', 'CDS'])]['name'])[next_index]
+                #get the df of the next list, if len == 0, then it is a tRNA and we need to go to the next index
+                next_gene_df = list(shuffle_features[shuffle_features['featType'].isin(['gene', 'rRNA', 'CDS'])]['name'])
+                if len(next_gene_df) != 0:
+                    next_gene = next_gene_df[next_index]
                     next_start = int(shuffle_features.loc[shuffle_features['name'] == next_gene, 'start']) 
+                    print("looking at {}, prev_stop is {}, start is {}".format(next_gene, first_stop, next_start))
+                    #print(shuffle_features[shuffle_features['featType'].isin(['gene', 'rRNA', 'CDS'])])
+                    # if the gene we're looking at and the next one don't overlap, move on
                     if first_stop < next_start:
                         break
-                except:
-                    pass
-            #print("next_gene is {}".format(next_gene))
-            if next_gene == first_gene:
+            print("next_gene before checking for first is {}".format(next_gene))
+            if next_gene == absolute_first:
                 done = True
                 break
+            #now we can reset the first gene for the next iteration
+            first_gene = next_gene
             shuffle_features = shuffle_features.copy(deep=True)
             # figure out where the next start point is going to be
             next_start = int(shuffle_features.loc[shuffle_features['name'] == next_gene, 'start'])
@@ -133,6 +145,7 @@ class GFFParse():
             new_copy = copy.deepcopy(self)
             new_copy.set_features(shuffle_features)
             shuffles.append(new_copy)
+        print("len shuffles: {}".format(len(shuffles)))
         return shuffles
 
     def couple(self, other_GFF, this_y = 0, other_y = 1):

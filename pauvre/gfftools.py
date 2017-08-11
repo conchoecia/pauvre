@@ -19,15 +19,21 @@
 
 """This file contains things related to parsing and plotting GFF files"""
 
+import copy
 from matplotlib.path import Path
 import matplotlib.patches as patches
 
 global chevron_width
 global arrow_width
+global min_text
+global text_cutoff
+
 arrow_width = 80
 chevron_width = 40
+min_text = 550
+text_cutoff = 150
 
-def _plot_lff(left_df, right_df, colorMap, y_pos, bar_thickness):
+def _plot_lff(panel, left_df, right_df, colorMap, y_pos, bar_thickness, text):
     """ plots a lff patch
       1__________2      ____________
       | #lff      \     \ #rff      \
@@ -55,10 +61,60 @@ def _plot_lff(left_df, right_df, colorMap, y_pos, bar_thickness):
     path = Path(verts, codes)
     patch = patches.PathPatch(path, lw = 0,
                  fc=colorMap[left_df['featType']] )
+    text_width = left_df['width']
+    if text and text_width >= min_text:
+        panel = _plot_label(panel, left_df, y_pos, bar_thickness)
+    elif text and text_width < min_text and text_width >= text_cutoff:
+        panel = _plot_label(panel, left_df,
+                            y_pos, bar_thickness,
+                            rotate = True, arrow = True)
 
-    return patch
+    return panel, patch
 
-def _plot_rff(left_df, right_df, colorMap, y_pos, bar_thickness):
+def _plot_label(panel, df, y_pos, bar_thickness, rotate = False, arrow = False):
+    # handles the case where a dataframe was passed
+    fontsize = 8
+    rotation = 0
+    if rotate:
+       fontsize = 5
+       rotation = 90
+    if len(df) == 1:
+        x =((df.loc[0, 'stop'] - df.loc[0, 'start'])/2) + df.loc[0, 'start']
+        y = y_pos + (bar_thickness/2)
+        # if we need to center somewhere other than the arrow, need to adjust
+        #  for the direction of the arrow
+        # it doesn't look good if it shifts by the whole arrow width, so only
+        #  shift by half the arrow width
+        if arrow:
+            if df.loc[0, 'strand'] == "+":
+                shift_start = df.loc[0, 'start']
+            else:
+                shift_start = df.loc[0, 'start'] + (arrow_width/2)
+            x =((df.loc[0, 'stop'] - (arrow_width/2) - df.loc[0, 'start'])/2) + shift_start
+        panel.text(x, y,
+                   df.loc[0, 'name'], fontsize = fontsize,
+                   ha='center', va='center',
+                   color = 'white', family = 'monospace',
+                   zorder = 100, rotation = rotation)
+    # and the case where a series was passed
+    else:
+        x = ((df['stop'] - df['start'])/2) + df['start']
+        y = y_pos + (bar_thickness/2)
+        if arrow:
+            if df['strand'] == "+":
+                shift_start = df['start']
+            else:
+                shift_start = df['start'] + (arrow_width/2)
+            x =((df['stop'] - (arrow_width/2) - df['start'])/2) + shift_start
+        panel.text(x, y,
+                   df['name'], fontsize = fontsize,
+                   ha='center', va='center',
+                   color = 'white', family = 'monospace',
+                   zorder = 100, rotation = rotation)
+
+    return panel
+
+def _plot_rff(panel, left_df, right_df, colorMap, y_pos, bar_thickness, text):
     """ plots a rff patch
       ____________      1__________2
       | #lff      \     \ #rff      \
@@ -88,10 +144,15 @@ def _plot_rff(left_df, right_df, colorMap, y_pos, bar_thickness):
     path = Path(verts, codes)
     patch = patches.PathPatch(path, lw = 0,
                  fc=colorMap[right_df['featType']] )
+    text_width = right_df['width']
+    if text and text_width >= min_text:
+        panel = _plot_label(panel, right_df, y_pos, bar_thickness)
+    elif text and text_width < min_text and text_width >= text_cutoff:
+        panel = _plot_label(panel, right_df,
+                            y_pos, bar_thickness, rotate = True)
+    return panel, patch
 
-    return patch
-
-def gffplot_horizontal(args, gff_object, track_width, start_y):
+def gffplot_horizontal(figure, panel, args, gff_object, track_width, start_y):
     # Because this size should be relative to the circle that it is plotted next
     #  to, define the start_radius as the place to work from, and the width of
     #  each track.
@@ -106,7 +167,6 @@ def gffplot_horizontal(args, gff_object, track_width, start_y):
     idone = False
     # we need to filter out the tRNAs since those are plotted last
     plottable_features = gff_object.features.query("featType != 'tRNA' and featType != 'region' and featType != 'source'")
-    print(plottable_features)
     plottable_features.reset_index(inplace=True, drop=True)
     print(plottable_features)
     len_plottable = len(plottable_features)
@@ -162,8 +222,8 @@ def gffplot_horizontal(args, gff_object, track_width, start_y):
 
     for feature_set in plot_order:
         # plot_feature_hori handles overlapping cases as well as normal cases
-        patches = gffplot_feature_hori(feature_set, colorMap,
-                                       start_y, bar_thickness)
+        panel, patches = gffplot_feature_hori(figure, panel, feature_set, colorMap,
+                                              start_y, bar_thickness, text = True)
         for each in patches:
             myPatches.append(each)
     # Now we add all of the tRNAs to this to plot, do it last to overlay
@@ -175,16 +235,13 @@ def gffplot_horizontal(args, gff_object, track_width, start_y):
     for i in range(0,len(tRNAs)):
         this_feature = tRNAs[i:i+1].copy(deep=True)
         this_feature.reset_index(inplace=True, drop = True)
-        print("this feature is {} long".format(len(this_feature)))
-        patches = gffplot_feature_hori(this_feature, colorMap,
-                             tRNA_start_y, tRNA_bar_thickness)
+        panel, patches = gffplot_feature_hori(figure, panel, this_feature, colorMap,
+                             tRNA_start_y, tRNA_bar_thickness, text = True)
         for patch in patches:
-            print("in the tRNA for loop {}".format( type(patch)))
             myPatches.append(patch)
-    return myPatches
+    return panel, myPatches
 
-
-def gffplot_feature_hori(feature_df, colorMap, y_pos, bar_thickness):
+def gffplot_feature_hori(figure, panel, feature_df, colorMap, y_pos, bar_thickness, text=True):
     """This plots the track for a feature, and if there is something for
     'this_feature_overlaps_feature', then there is special processing to
     add the white bar and the extra slope for the chevron
@@ -212,13 +269,26 @@ def gffplot_feature_hori(feature_df, colorMap, y_pos, bar_thickness):
                      (feature_df.loc[0, 'start'] + arrow_width, y_pos),       #4
                      (feature_df.loc[0, 'stop'], y_pos),                    #5
                      (feature_df.loc[0, 'stop'], y_pos + bar_thickness)]    #1
+        feat_width = feature_df.loc[0,'width']
+        if text and feat_width >= min_text:
+            panel = _plot_label(panel, feature_df.loc[0,],
+                                y_pos, bar_thickness)
+        elif text and feat_width < min_text and feat_width >= text_cutoff:
+            panel = _plot_label(panel, feature_df.loc[0,],
+                                y_pos, bar_thickness,
+                                rotate = True, arrow = True)
+
         codes = [Path.MOVETO,
-                 Path.LINETO,
-                 Path.LINETO,
-                 Path.LINETO,
-                 Path.LINETO,
-                 Path.CLOSEPOLY]
+                    Path.LINETO,
+                    Path.LINETO,
+                    Path.LINETO,
+                    Path.LINETO,
+                    Path.CLOSEPOLY]
         path = Path(verts, codes)
+        # If the feature itself is smaller than the arrow, we need to take special measures to 
+        if feature_df.loc[0,'width'] <= arrow_width:
+            path = Path([verts[i] for i in [0,2,4,5]],
+                        [codes[i] for i in [0,2,4,5]])
         patch = patches.PathPatch(path, lw = 0,
                   fc=colorMap[feature_df.loc[0, 'featType']] )
         myPatches.append(patch)
@@ -277,8 +347,9 @@ def gffplot_feature_hori(feature_df, colorMap, y_pos, bar_thickness):
                 if feature_df.loc[i, 'strand'] == '+':
                     if feature_df.loc[i + 1, 'strand'] == '+':
                         # plot a lff type
-                        myPatches.append(_plot_lff(feature_df.iloc[i,], feature_df.iloc[i+1,],
-                                                   colorMap, y_pos, bar_thickness))
+                        panel, patch = _plot_lff(panel, feature_df.iloc[i,], feature_df.iloc[i+1,],
+                                                 colorMap, y_pos, bar_thickness, text)
+                        myPatches.append(patch)
                     elif feature_df.loc[i + 1, 'strand'] == '-':
                         #plot a lfr type
                         raise IOError("can't plot {} patches yet".format("lfr"))
@@ -296,8 +367,9 @@ def gffplot_feature_hori(feature_df, colorMap, y_pos, bar_thickness):
                 if feature_df.loc[i-1, 'strand'] == '+':
                     if feature_df.loc[i, 'strand'] == '+':
                         # plot a rff type
-                        myPatches.append(_plot_rff(feature_df.iloc[i-1,], feature_df.iloc[i,],
-                                                   colorMap, y_pos, bar_thickness))
+                        panel, patch = _plot_rff(panel, feature_df.iloc[i-1,], feature_df.iloc[i,],
+                                                 colorMap, y_pos, bar_thickness, text)
+                        myPatches.append(patch)
                     elif feature_df.loc[i, 'strand'] == '-':
                         #plot a rfr type
                         raise IOError("can't plot {} patches yet".format("rfr"))
@@ -309,4 +381,4 @@ def gffplot_feature_hori(feature_df, colorMap, y_pos, bar_thickness):
                     elif feature_df.loc[i, 'strand'] == '-':
                         #plot a rrr type
                         raise IOError("can't plot {} patches yet".format("rrr"))
-    return myPatches
+    return panel, myPatches
