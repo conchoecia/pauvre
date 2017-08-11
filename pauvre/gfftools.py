@@ -24,9 +24,8 @@ import matplotlib.patches as patches
 
 global chevron_width
 global arrow_width
-arrow_width = 150
-chevron_width = 75
-
+arrow_width = 80
+chevron_width = 40
 
 def _plot_lff(left_df, right_df, colorMap, y_pos, bar_thickness):
     """ plots a lff patch
@@ -56,6 +55,7 @@ def _plot_lff(left_df, right_df, colorMap, y_pos, bar_thickness):
     path = Path(verts, codes)
     patch = patches.PathPatch(path, lw = 0,
                  fc=colorMap[left_df['featType']] )
+
     return patch
 
 def _plot_rff(left_df, right_df, colorMap, y_pos, bar_thickness):
@@ -88,6 +88,7 @@ def _plot_rff(left_df, right_df, colorMap, y_pos, bar_thickness):
     path = Path(verts, codes)
     patch = patches.PathPatch(path, lw = 0,
                  fc=colorMap[right_df['featType']] )
+
     return patch
 
 def gffplot_horizontal(args, gff_object, track_width, start_y):
@@ -117,14 +118,14 @@ def gffplot_horizontal(args, gff_object, track_width, start_y):
     #     ith element.
     i = 0
     while idone == False:
-        print("im in the overlap-pairing while loop i={}".format(i))
+        #print("im in the overlap-pairing while loop i={}".format(i))
         # look ahead at all of the elements that overlap with the ith element
         jdone = False
         j = 1
         this_set_minimum_index = i
         this_set_maximum_index = i
         while jdone == False:
-            print("new i= {} j={} len={}".format(i, j, len_plottable))
+            #print("new i= {} j={} len={}".format(i, j, len_plottable))
             #print(len_plottable)
             #print(plottable_features)
             # first make sure that we haven't gone off the end of the dataframe
@@ -164,30 +165,22 @@ def gffplot_horizontal(args, gff_object, track_width, start_y):
         patches = gffplot_feature_hori(feature_set, colorMap,
                                        start_y, bar_thickness)
         for each in patches:
-               myPatches.append(each)
-#    # Now we add all of the tRNAs to this to plot, do it last to overlay
-#    #  everything else
-#    tRNAs = gff_object.features.query("featType == 'tRNA'")
-#    tRNAs.reset_index(inplace=True, drop = True)
-#    print(tRNAs)
-#    tRNA_bar_thickness = bar_thickness * (0.8)
-#    tRNA_x_center  = x_center + ((tRNA_bar_thickness * (0.2))/2)
-#    #tRNA_bar_thickness = bar_thickness
-#    #tRNA_x_center  = x_center
-#    print("sequence_length = {}".format(sequence_length))
-#    angle_ranges = []
-#    for i in range(0,len(tRNAs)):
-#        this_feature = tRNAs.loc[i,]
-#        min_angle = angleMap[min(this_feature.loc['start'],this_feature.loc['stop'])]
-#        max_angle = angleMap[max(this_feature.loc['start'],this_feature.loc['stop'])]
-#        angle_ranges.append((min_angle, max_angle))
-#        patches = gffplot_feature_hori(this_feature, colorMap, tRNA_x_center,
-#                               tRNA_bar_thickness, direction,
-#                               pd.Series([]))
-#        for each in patches:
-#            myPatches.append(each)
-#    print("angle ranges of tRNAs")
-#    print(angle_ranges)
+            myPatches.append(each)
+    # Now we add all of the tRNAs to this to plot, do it last to overlay
+    #  everything else
+    tRNAs = gff_object.features.query("featType == 'tRNA'")
+    tRNAs.reset_index(inplace=True, drop = True)
+    tRNA_bar_thickness = bar_thickness * (0.8)
+    tRNA_start_y  = start_y + ((bar_thickness - tRNA_bar_thickness)/2)
+    for i in range(0,len(tRNAs)):
+        this_feature = tRNAs[i:i+1].copy(deep=True)
+        this_feature.reset_index(inplace=True, drop = True)
+        print("this feature is {} long".format(len(this_feature)))
+        patches = gffplot_feature_hori(this_feature, colorMap,
+                             tRNA_start_y, tRNA_bar_thickness)
+        for patch in patches:
+            print("in the tRNA for loop {}".format( type(patch)))
+            myPatches.append(patch)
     return myPatches
 
 
@@ -196,35 +189,35 @@ def gffplot_feature_hori(feature_df, colorMap, y_pos, bar_thickness):
     'this_feature_overlaps_feature', then there is special processing to
     add the white bar and the extra slope for the chevron
     """
-    arrow_width = 80
-    chevron_width = 40
     myPatches = []
     #if there is only one feature to plot, then just plot it
     if len(feature_df) == 1:
-        print("plotting a single thing")
+        #print("plotting a single thing: {} {}".format(str(feature_df['sequence']).split()[1],
+        #                                              str(feature_df['featType']).split()[1] ))
         #print(this_feature['name'], "is not overlapping")
-        # This plots this shape:  ___________
-        #                        |           \
-        #                        |___________/
+        # This plots this shape:  1_________2       2_________1
+        #                        |  forward  \3   3/  reverse |
+        #                        |5__________/4    \4________5|
         if feature_df.loc[0,'strand'] == '+':
-            direction = 1
-        elif feature_df.loc[0, 'strand'] == '-':
-            direction = -1
-
-        verts = [(feature_df.loc[0, 'start'], y_pos + bar_thickness),
-                 (feature_df.loc[0, 'stop'] - (arrow_width*direction), y_pos + bar_thickness),
-                 (feature_df.loc[0, 'stop'], y_pos + (bar_thickness/2)),
-                 (feature_df.loc[0, 'stop'] - (arrow_width*direction), y_pos),
-                 (feature_df.loc[0, 'start'], y_pos),
-                 (feature_df.loc[0, 'start'], y_pos + bar_thickness),
-                 ]
+            verts = [(feature_df.loc[0, 'start'], y_pos + bar_thickness),    #1
+                     (feature_df.loc[0, 'stop'] - arrow_width, y_pos + bar_thickness), #2
+                     (feature_df.loc[0, 'stop'], y_pos + (bar_thickness/2)), #3
+                     (feature_df.loc[0, 'stop'] - arrow_width, y_pos),       #4
+                     (feature_df.loc[0, 'start'], y_pos),                    #5
+                     (feature_df.loc[0, 'start'], y_pos + bar_thickness)]    #1
+        elif feature_df.loc[0,'strand'] == '-':
+            verts = [(feature_df.loc[0, 'stop'], y_pos + bar_thickness),    #1
+                     (feature_df.loc[0, 'start'] + arrow_width, y_pos + bar_thickness), #2
+                     (feature_df.loc[0, 'start'], y_pos + (bar_thickness/2)), #3
+                     (feature_df.loc[0, 'start'] + arrow_width, y_pos),       #4
+                     (feature_df.loc[0, 'stop'], y_pos),                    #5
+                     (feature_df.loc[0, 'stop'], y_pos + bar_thickness)]    #1
         codes = [Path.MOVETO,
                  Path.LINETO,
                  Path.LINETO,
                  Path.LINETO,
                  Path.LINETO,
-                 Path.CLOSEPOLY,
-                 ]
+                 Path.CLOSEPOLY]
         path = Path(verts, codes)
         patch = patches.PathPatch(path, lw = 0,
                   fc=colorMap[feature_df.loc[0, 'featType']] )
@@ -276,6 +269,7 @@ def gffplot_feature_hori(feature_df, colorMap, y_pos, bar_thickness):
     # To properly plot these elements, we must go through each element of the
     #  feature_df to determine which patch type it is.
     elif len(feature_df) == 2:
+        print("im in here feat len=2")
         for i in range(len(feature_df)):
             # this tests for which left type we're dealing with
             if i == 0:

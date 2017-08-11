@@ -55,9 +55,9 @@ class GFFParse():
             # if the direction is forward, subtract three from the stop to bring it closer to the start
             self.features.loc[(self.features['featType'].isin(strip_codons)) & (self.features['strand'] == '+'), 'stop'] =\
                 self.features.loc[(self.features['featType'].isin(strip_codons)) & (self.features['strand'] == '+'), 'stop']  - 3
-            # if the direction is reverse, add three to the stop to bring it closer to the start
-            self.features.loc[(self.features['featType'].isin(strip_codons)) & (self.features['strand'] == '-'), 'stop'] =\
-                self.features.loc[(self.features['featType'].isin(strip_codons)) & (self.features['strand'] == '-'), 'stop']  + 3
+            # if the direction is reverse, add three to the start (since the coords are flip-flopped)
+            self.features.loc[(self.features['featType'].isin(strip_codons)) & (self.features['strand'] == '-'), 'start'] =\
+                self.features.loc[(self.features['featType'].isin(strip_codons)) & (self.features['strand'] == '-'), 'start']  + 3
         self.features['center'] = self.features['start'] + ((self.features['stop'] - self.features['start'])/2)
         # we need to add one since it doesn't account for the last base otherwise
         self.features['width'] = abs(self.features['stop'] - self.features['start'] ) + 1
@@ -89,8 +89,10 @@ class GFFParse():
         #subtract the indices of everything, then reset the ones that are below
         # zero
         done = False
-        shuffle_features = self.features[self.features['featType'].isin(['gene', 'rRNA', 'CDS'])].copy(deep=True)
+        shuffle_features = self.features[self.features['featType'].isin(['gene', 'rRNA', 'CDS', 'tRNA'])].copy(deep=True)
+        #shuffle_features = self.features.copy(deep=True)
         # we first add the shuffle features without reorganizing
+        print("shuffle\n",shuffle_features)
         add_first = copy.deepcopy(self)
         add_first.set_features(shuffle_features)
         shuffles.append(add_first)
@@ -101,11 +103,14 @@ class GFFParse():
             #  end of first gene is less than the start of the next gene.
             first_stop = int(shuffle_features.loc[shuffle_features['name'] == first_gene, 'stop'])
             for next_index in range(1, len(shuffle_features)):
-                next_gene = list(shuffle_features[shuffle_features['featType'].isin(['gene', 'rRNA', 'CDS'])]['name'])[next_index]
-                next_start = int(shuffle_features.loc[shuffle_features['name'] == next_gene, 'start'])
-                if first_stop < next_start:
-                    break
-
+                # this block will fail sometimes if the next thing is a tRNA, so just skip it
+                try:
+                    next_gene = list(shuffle_features[shuffle_features['featType'].isin(['gene', 'rRNA', 'CDS'])]['name'])[next_index]
+                    next_start = int(shuffle_features.loc[shuffle_features['name'] == next_gene, 'start']) 
+                    if first_stop < next_start:
+                        break
+                except:
+                    pass
             #print("next_gene is {}".format(next_gene))
             if next_gene == first_gene:
                 done = True
@@ -113,10 +118,11 @@ class GFFParse():
             shuffle_features = shuffle_features.copy(deep=True)
             # figure out where the next start point is going to be
             next_start = int(shuffle_features.loc[shuffle_features['name'] == next_gene, 'start'])
+            print('next gene: {}'.format(next_gene))
             shuffle_features['start'] = shuffle_features['start'] - next_start + 1
             shuffle_features['stop'] = shuffle_features['stop'] - next_start + 1
             shuffle_features['center'] = shuffle_features['center'] - next_start + 1
-            # ow correct the values that are less than 0
+            # now correct the values that are less than 0
             shuffle_features.loc[shuffle_features['start'] < 0, 'start'] = shuffle_features.loc[shuffle_features['start'] < 0, 'start'] + self.seqlen
             shuffle_features.loc[shuffle_features['stop'] < 0, 'stop'] = shuffle_features.loc[shuffle_features['stop'] < 0, 'start'] + shuffle_features.loc[shuffle_features['stop'] < 0, 'width']
             shuffle_features['center'] = shuffle_features['start'] + ((shuffle_features['stop'] - shuffle_features['start'])/2)
