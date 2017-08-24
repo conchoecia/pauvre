@@ -43,7 +43,7 @@ setup(name='pauvre',
           https://github.com/conchoecia/pauvre
       """,
 
-      url='https://github.com/conchoecia/gloTK',
+      url='https://github.com/conchoecia/pauvre',
       author='Darrin Schultz',
       author_email='dts@ucsc.edu',
       classifiers=[
