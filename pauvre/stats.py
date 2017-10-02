@@ -55,15 +55,30 @@ from pauvre.functions import parse_fastq_length_meanqual
 import os
 import pandas as pd
 import numpy as np
+from scipy.optimize import minimize
+from scipy.misc import factorial
+
+def poisson(k, lamb):
+    """poisson pdf, parameter lamb is the fit parameter
+    # This code from https://stackoverflow.com/questions/25828184/fitting-to-poisson-histogram
+    # Using answer from https://stackoverflow.com/users/3838691/maxnoe"""
+    return (lamb**k/factorial(k)) * np.exp(-lamb)
 
 
-def stats(fastqName, length, meanQual):
+def negLogLikelihood(params, data):
+    """ the negative log-Likelohood-Function
+    # This code from https://stackoverflow.com/questions/25828184/fitting-to-poisson-histogram
+    # Using answer from https://stackoverflow.com/users/3838691/maxnoe"""
+    lnl = - np.sum(np.log(poisson(data, params[0])))
+    return lnl
+
+def stats(fastqName, lengths, meanQuals):
     """
     arguments:
      <lengths> a list of read lengths
-     <meanQual> a list of mean read qualities
+     <meanQuals> a list of mean read qualities
      *NOTE* the indexing for each list is the same.
-            element <lengths>[0] is the same read as <meanQual>[0]
+            element <lengths>[0] is the same read as <meanQuals>[0]
 
     purpose:
      Calculate and output various stats about this fastq file. Currently
@@ -110,28 +125,28 @@ def stats(fastqName, length, meanQual):
     """
     fastqBase = os.path.basename(fastqName)
 
-    printString = "# Fastq stats for {}\n".format(fastqBase)
+    print_string = "# Fastq stats for {}\n".format(fastqBase)
 
-    printString += "numReads: {}\n".format(len(length))
-    printString += "numBasepairs: {}\n".format(sum(length))
-    printString += "meanLen: {}\n".format(np.mean(length))
-    printString += "medianLen: {}\n".format(np.median(length))
-    printString += "minLen: {}\n".format(min(length))
-    maxLen = max(length)
-    printString += "maxLen: {}\n".format(maxLen)
+    print_string += "numReads: {}\n".format(len(lengths))
+    print_string += "numBasepairs: {}\n".format(sum(lengths))
+    print_string += "meanLen: {}\n".format(np.mean(lengths))
+    print_string += "medianLen: {}\n".format(np.median(lengths))
+    print_string += "minLen: {}\n".format(min(lengths))
+    maxLen = max(lengths)
+    print_string += "maxLen: {}\n".format(maxLen)
 
     #calculate the N50
-    fiftypercent = 0.5 * sum(length)
+    fiftypercent = 0.5 * sum(lengths)
     N50          = 0
     L50          = 0
     lenSum       = 0
     count        = 0
-    for val in sorted(length, reverse=True):
+    for val in sorted(lengths, reverse=True):
         lenSum += val
         count += 1
         if lenSum >= fiftypercent:
-            printString += "N50: {}\n".format(int(val))
-            printString += "L50: {}\n".format(count)
+            print_string += "N50: {}\n".format(int(val))
+            print_string += "L50: {}\n".format(count)
             break
 
     #This block calculates the number of length bins for this data set
@@ -148,10 +163,20 @@ def stats(fastqName, length, meanQual):
     lengthBinList = []
     for i in range(numBinSteps):
         lengthBinList.append(binStepVal * i)
+    #this is the ML fit of the length data
+    # probably delete this if nothing is done with it in the next release
+    #result = minimize(negLogLikelihood,  # function to minimize
+    #                  x0=np.ones(1),     # start value
+    #                  args=(lengths,),      # additional arguments for function
+    #                  method='Powell',   # minimization method, see docs
+    #                  )
+    ## result is a scipy optimize result object, the fit parameters
+    ## are stored in result.x
+    #print(result)
 
 
     #now set up the bins for mean PHRED
-    maxQual = int(max(meanQual) + 1)
+    maxQual = int(max(meanQuals) + 1)
     stepInt = int(maxQual/5)
     rangeSet = set(range(0, maxQual+stepInt, stepInt))
     templist = [5, 10, 15, 20, 25, 30] + list(np.arange(29.5, 10, -4)) + list(np.arange(9.5, 0, -1))
@@ -163,8 +188,8 @@ def stats(fastqName, length, meanQual):
             break
     qualBinList = sorted(rangeSet)
 
-    df = pd.DataFrame({'length': length,
-                       'qual'  : meanQual})
+    df = pd.DataFrame({'length': lengths,
+                       'qual'  : meanQuals})
 
     #now make a table of read lengths
     # row = j
@@ -197,16 +222,16 @@ def stats(fastqName, length, meanQual):
         blank = " " * minLenLen
         # center the text on this offset as the table title
         txtoffset = lendataframeStr - minLenLen
-        printString += "\n{}{:^{offset}}\n".format(
+        print_string += "\n{}{:^{offset}}\n".format(
             blank, key, offset=txtoffset)
-        printString += dataframeStr + "\n"
+        print_string += dataframeStr + "\n"
 
 
-    print(printString)
+    print(print_string)
 
-def run(parser, args):
+def run(args):
     """This just opens the fastq file and passes the info to the stats() function.
     This is a wrapper function that is accessed by pauvre_main.
     Useful since we can call stats() independently from other pauvre programs."""
-    length, meanQual = parse_fastq_length_meanqual(args.fastq)
-    stats(args.fastq, length, meanQual)
+    lengths, meanQuals = parse_fastq_length_meanqual(args.fastq)
+    stats(args.fastq, lengths, meanQuals)

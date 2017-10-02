@@ -18,20 +18,17 @@
 # along with pauvre.  If not, see <http://www.gnu.org/licenses/>.
 
 import matplotlib
-import platform
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mplpatches
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import pandas as pd
 import os.path as opath
-from pauvre.functions import parse_fastq_length_meanqual
+from pauvre.functions import parse_fastq_length_meanqual, print_images
 from pauvre.stats import stats
 import pauvre.rcparams as rc
 import logging
-
-if platform.system() == 'Linux':
-    matplotlib.use('agg')
 
 # logging
 logger = logging.getLogger('pauvre')
@@ -43,8 +40,6 @@ def generate_panel(panel_left, panel_bottom, panel_width, panel_height,
                    left_tick_param='on', label_left_tick_param='on',
                    right_tick_param='off', label_right_tick_param='off',
                    top_tick_param='off', label_top_tick_param='off'):
-
-
     """
         Setting default panel tick parameters. Some of these are the defaults
         for matplotlib anyway, but specifying them for readability. Here are
@@ -181,20 +176,6 @@ def generate_legend(panel, counts, color):
     panel.set_ylabel('Number of Reads')
 
 
-def print_images(base_output_name, image_formats, dpi, transparent=False):
-    file_base = opath.splitext(opath.basename(base_output_name))[0]
-
-    for fmt in image_formats:
-        out_name = "{}.{}".format(file_base, fmt)
-        try:
-            if fmt == 'png':
-                plt.savefig(out_name, dpi=dpi, transparent=transparent)
-            else:
-                plt.savefig(out_name, format=fmt, transparent=transparent)
-        except PermissionError:
-            # thanks to https://github.com/wdecoster for the suggestion
-            print("""You don't have permission to save pauvre plots to this
-            directory. Try changing the directory and running the script again!""")
 
 
 def margin_plot(args):
