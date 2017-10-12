@@ -151,7 +151,7 @@ def stats(fastqName, lengths, meanQuals):
         # tss = this step size
         tss = size_map[i][1]
         if maxLen < this_max_size:
-            for this_bin in range(current_val, (np.ceil(maxLen/tss)) * tss) + tss, tss):
+            for this_bin in range(current_val, (np.ceil(maxLen/tss) * tss) + tss, tss):
                 lengthBinList.append(this_bin)
         if maxLen >= this_max_size:
             for this_bin in range(current_val, this_max_size, tss):
@@ -212,8 +212,6 @@ def stats(fastqName, lengths, meanQuals):
         print_string += "\n{}{:^{offset}}\n".format(
             blank, key, offset=txtoffset)
         print_string += dataframeStr + "\n"
-
-
     print(print_string)
 
 def run(args):
