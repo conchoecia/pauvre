@@ -58,20 +58,6 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.misc import factorial
 
-def poisson(k, lamb):
-    """poisson pdf, parameter lamb is the fit parameter
-    # This code from https://stackoverflow.com/questions/25828184/fitting-to-poisson-histogram
-    # Using answer from https://stackoverflow.com/users/3838691/maxnoe"""
-    return (lamb**k/factorial(k)) * np.exp(-lamb)
-
-
-def negLogLikelihood(params, data):
-    """ the negative log-Likelohood-Function
-    # This code from https://stackoverflow.com/questions/25828184/fitting-to-poisson-histogram
-    # Using answer from https://stackoverflow.com/users/3838691/maxnoe"""
-    lnl = - np.sum(np.log(poisson(data, params[0])))
-    return lnl
-
 def stats(fastqName, lengths, meanQuals):
     """
     arguments:
@@ -150,29 +136,30 @@ def stats(fastqName, lengths, meanQuals):
             break
 
     #This block calculates the number of length bins for this data set
-    scale = [10, 100, 1000, 10000, 100000, 1000000, 10000000]
-    scaleChoice = 0
-    for val in scale:
-        thisDiv = maxLen / val
-        if thisDiv < 10:
-            scaleChoice = val
-            break
-    numBinSteps = int((int(maxLen / val) + 1) * 2)
-    maxVal = int((int(maxLen / val) + 1) * val)
-    binStepVal = int(maxVal/(numBinSteps))
+    maxLen
     lengthBinList = []
+    # size_map = [(max size, step range)]
+    size_map = [(10000, 500),
+                (40000, 1000),
+                (100000, 5000),
+                (500000, 20000),
+                (1000000, 50000),
+                (10000000000, 50000)]
+    current_val = 0
+    for i in range(0, len(size_map) - 1):
+        this_max_size = size_map[i][0]
+        # tss = this step size
+        tss = size_map[i][1]
+        if maxLen < this_max_size:
+            for this_bin in range(current_val, (np.ceil(maxLen/tss)) * tss) + tss, tss):
+                lengthBinList.append(this_bin)
+        if maxLen >= this_max_size:
+            for this_bin in range(current_val, this_max_size, tss):
+                lengthBinList.append(this_bin)
+            current_val = this_max_size
+
     for i in range(numBinSteps):
         lengthBinList.append(binStepVal * i)
-    #this is the ML fit of the length data
-    # probably delete this if nothing is done with it in the next release
-    #result = minimize(negLogLikelihood,  # function to minimize
-    #                  x0=np.ones(1),     # start value
-    #                  args=(lengths,),      # additional arguments for function
-    #                  method='Powell',   # minimization method, see docs
-    #                  )
-    ## result is a scipy optimize result object, the fit parameters
-    ## are stored in result.x
-    #print(result)
 
 
     #now set up the bins for mean PHRED

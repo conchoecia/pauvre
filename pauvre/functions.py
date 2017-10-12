@@ -22,6 +22,10 @@ import copy
 import numpy as np
 import os
 import pandas as pd
+import os.path as opath
+import matplotlib.pyplot as plt
+import gzip
+
 
 # this makes opening files more robust for different platforms
 #  currently only used in GFFParse
@@ -29,10 +33,25 @@ import codecs
 
 import warnings
 
+def print_images(base_output_name, image_formats, dpi, transparent=False):
+    file_base = opath.splitext(opath.basename(base_output_name))[0]
+    for fmt in image_formats:
+        out_name = "{}.{}".format(file_base, fmt)
+        try:
+            if fmt == 'png':
+                plt.savefig(out_name, dpi=dpi, transparent=transparent)
+            else:
+                plt.savefig(out_name, format=fmt, transparent=transparent)
+        except PermissionError:
+            # thanks to https://github.com/wdecoster for the suggestion
+            print("""You don't have permission to save pauvre plots to this
+            directory. Try changing the directory and running the script again!""")
+
 class GFFParse():
-    def __init__(self, filename, stop_codons):
+    def __init__(self, filename, stop_codons = None, species = None):
         self.filename = filename
         self.samplename = os.path.splitext(os.path.basename(filename))[0]
+        self.species = species
         self.featureDict ={"name":[],
                            "featType":[],
                            "start":[],
@@ -64,6 +83,13 @@ class GFFParse():
         self.features['lmost'] = self.features.apply(self._determine_lmost, axis=1)
         self.features['rmost'] = self.features.apply(self._determine_rmost, axis=1)
         self.features['track'] = 0
+        if len(self.features.loc[self.features['tags'] == "Is_circular=true",'stop']) < 1:
+            raise IOError("""The GFF file needs to have a tag ending in "Is_circular=true"
+            with a region from 1 to the number of bases in the mitogenome
+
+            example:
+            Bf201311	Geneious	region	1	13337	.	+	0	Is_circular=true
+            """)
         self.seqlen = int(self.features.loc[self.features['tags'] == "Is_circular=true",'stop'])
         self.features.reset_index(inplace=True, drop=True)
         #print("float", self.features.loc[self.features['name'] == 'COX1', 'center'])
@@ -135,8 +161,8 @@ class GFFParse():
             shuffle_features['stop'] = shuffle_features['stop'] - next_start + 1
             shuffle_features['center'] = shuffle_features['center'] - next_start + 1
             # now correct the values that are less than 0
-            shuffle_features.loc[shuffle_features['start'] < 0, 'start'] = shuffle_features.loc[shuffle_features['start'] < 0, 'start'] + self.seqlen
-            shuffle_features.loc[shuffle_features['stop'] < 0, 'stop'] = shuffle_features.loc[shuffle_features['stop'] < 0, 'start'] + shuffle_features.loc[shuffle_features['stop'] < 0, 'width']
+            shuffle_features.loc[shuffle_features['start'] <1, 'start'] = shuffle_features.loc[shuffle_features['start'] <1, 'start'] + self.seqlen
+            shuffle_features.loc[shuffle_features['stop'] <1, 'stop'] = shuffle_features.loc[shuffle_features['stop'] <1, 'start'] + shuffle_features.loc[shuffle_features['stop'] <1, 'width']
             shuffle_features['center'] = shuffle_features['start'] + ((shuffle_features['stop'] - shuffle_features['start'])/2)
             shuffle_features['lmost'] = shuffle_features.apply(self._determine_lmost, axis=1)
             shuffle_features['rmost'] = shuffle_features.apply(self._determine_rmost, axis=1)
@@ -217,13 +243,29 @@ def parse_fastq_length_meanqual(fastq):
     purpose:
      This function parses a fastq
     """
+
+    gzip_magic = "\x1f\x8b\x08"
+    gzipped = False
+
+
+    def file_type(filename):
+        with open(filename) as f:
+            file_start = f.read(max_len)
+            if file_start.startswith(gzip_magic):
+                gzipped = True
+
     length = []
     meanQual = []
-    with open(fastq,"r") as handle:
-        for record in SeqIO.parse(handle, "fastq"):
-            if len(record) > 0 and np.mean(record.letter_annotations["phred_quality"]) > 0:
-                meanQual.append(_arithmetic_mean(record.letter_annotations["phred_quality"]))
-                length.append(len(record))
+    if gzipped:
+        handle = gzip.open(fastq, "rt")
+    else:
+        handle = open(fastq,"r")
+
+    for record in SeqIO.parse(handle, "fastq"):
+        if len(record) > 0 and np.mean(record.letter_annotations["phred_quality"]) > 0:
+            meanQual.append(_arithmetic_mean(record.letter_annotations["phred_quality"]))
+            length.append(len(record))
+    handle.close()
     return length, meanQual
 
 def _geometric_mean(phred_values):
