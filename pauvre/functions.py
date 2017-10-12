@@ -244,29 +244,26 @@ def parse_fastq_length_meanqual(fastq):
      This function parses a fastq
     """
 
-    gzip_magic = "\x1f\x8b\x08"
-    gzipped = False
 
-    def file_type(filename):
-        with open(filename) as f:
-            file_start = f.read(3)
-            print(file_start)
-            if file_start.startswith(gzip_magic):
-                gzipped = True
-
-    length = []
-    meanQual = []
-    if gzipped:
+    try:
         handle = gzip.open(fastq, "rt")
-    else:
+        length, meanQual = _fastq_parse_helper(handle)
+    except:
         handle = open(fastq,"r")
+        length, meanQual = _fastq_parse_helper(handle)
 
-    for record in SeqIO.parse(handle, "fastq"):
-        if len(record) > 0 and np.mean(record.letter_annotations["phred_quality"]) > 0:
-            meanQual.append(_arithmetic_mean(record.letter_annotations["phred_quality"]))
-            length.append(len(record))
     handle.close()
     return length, meanQual
+
+def _fastq_parse_helper(handle):
+    length = []
+    meanQual = []
+    for record in SeqIO.parse(handle, "fastq"):
+        if len(record) > 0:
+            meanQual.append(_arithmetic_mean(record.letter_annotations["phred_quality"]))
+            length.append(len(record))
+    return length, meanQual
+
 
 def _geometric_mean(phred_values):
     """in case I want geometric mean in the future, can calculate it like this"""

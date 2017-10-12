@@ -111,32 +111,37 @@ def stats(fastqName, lengths, meanQuals):
     """
     fastqBase = os.path.basename(fastqName)
 
-    print_string = "# Fastq stats for {}\n".format(fastqBase)
+    analysis_sizes = [0, 1000, 5000, 10000]
+    print_string = ""
+    for this_size in analysis_sizes:
+        these_lengths = [x for x in lengths if x >= this_size]
+        print_string += "# Fastq stats for {}, reads >= {}bp\n".format(fastqBase,this_size)
+        print_string += "numReads: {}\n".format(len(these_lengths))
+        print_string += "%totalNumReads: {0:.2f}\n".format((len(these_lengths)/len(lengths))*100)
+        print_string += "numBasepairs: {}\n".format(sum(these_lengths))
+        print_string += "%totalBasepairs: {0:.2f}\n".format((sum(these_lengths)/sum(lengths))*100)
+        print_string += "meanLen: {}\n".format(np.mean(these_lengths))
+        print_string += "medianLen: {}\n".format(np.median(these_lengths))
+        print_string += "minLen: {}\n".format(min(these_lengths))
+        maxLen = max(these_lengths)
+        print_string += "maxLen: {}\n".format(maxLen)
 
-    print_string += "numReads: {}\n".format(len(lengths))
-    print_string += "numBasepairs: {}\n".format(sum(lengths))
-    print_string += "meanLen: {}\n".format(np.mean(lengths))
-    print_string += "medianLen: {}\n".format(np.median(lengths))
-    print_string += "minLen: {}\n".format(min(lengths))
-    maxLen = max(lengths)
-    print_string += "maxLen: {}\n".format(maxLen)
-
-    #calculate the N50
-    fiftypercent = 0.5 * sum(lengths)
-    N50          = 0
-    L50          = 0
-    lenSum       = 0
-    count        = 0
-    for val in sorted(lengths, reverse=True):
-        lenSum += val
-        count += 1
-        if lenSum >= fiftypercent:
-            print_string += "N50: {}\n".format(int(val))
-            print_string += "L50: {}\n".format(count)
-            break
+        #calculate the N50
+        fiftypercent = 0.5 * sum(these_lengths)
+        N50          = 0
+        L50          = 0
+        lenSum       = 0
+        count        = 0
+        for val in sorted(these_lengths, reverse=True):
+            lenSum += val
+            count += 1
+            if lenSum >= fiftypercent:
+                print_string += "N50: {}\n".format(int(val))
+                print_string += "L50: {}\n".format(count)
+                break
+        print_string += "\n"
 
     #This block calculates the number of length bins for this data set
-    maxLen
     lengthBinList = []
     # size_map = [(max size, step range)]
     size_map = [(10000, 500),
@@ -150,30 +155,21 @@ def stats(fastqName, lengths, meanQuals):
         this_max_size = size_map[i][0]
         # tss = this step size
         tss = size_map[i][1]
-        if maxLen < this_max_size:
-            for this_bin in range(current_val, (np.ceil(maxLen/tss) * tss) + tss, tss):
-                lengthBinList.append(this_bin)
-        if maxLen >= this_max_size:
-            for this_bin in range(current_val, this_max_size, tss):
-                lengthBinList.append(this_bin)
-            current_val = this_max_size
+        for this_bin in range(current_val, this_max_size, tss):
+            lengthBinList.append(this_bin)
+        current_val = this_max_size
+    # now figure out the largest bin
+    first_index_gt_maxLen = next(i for i,v in enumerate(lengthBinList) if v > maxLen) + 1
+    lengthBinList = lengthBinList[0:first_index_gt_maxLen]
 
-    for i in range(numBinSteps):
-        lengthBinList.append(binStepVal * i)
+    qualBinList = []
+    increment_by = 1
+    while len(qualBinList) == 0 or len(qualBinList) > 15:
+        #now set up the bins for mean PHRED
+        maxQual = int(np.ceil(max(meanQuals)))
+        qualBinList = list(np.arange(0, maxQual + increment_by, increment_by))
+        increment_by += 0.5
 
-
-    #now set up the bins for mean PHRED
-    maxQual = int(max(meanQuals) + 1)
-    stepInt = int(maxQual/5)
-    rangeSet = set(range(0, maxQual+stepInt, stepInt))
-    templist = [5, 10, 15, 20, 25, 30] + list(np.arange(29.5, 10, -4)) + list(np.arange(9.5, 0, -1))
-
-    addlist = [x for x in templist if x < maxQual]
-    for each in addlist:
-        rangeSet.update([each])
-        if len(rangeSet) == 10:
-            break
-    qualBinList = sorted(rangeSet)
 
     df = pd.DataFrame({'length': lengths,
                        'qual'  : meanQuals})
@@ -187,7 +183,7 @@ def stats(fastqName, lengths, meanQuals):
         dataNums = []
         readNums = []
         for i in range(len(qualBinList)):
-            thisQuery = df.query("length > {} and qual > {}".format(
+            thisQuery = df.query("length >= {} and qual >= {}".format(
                               lengthBinList[j], qualBinList[i]))
             dataNums.append(sum(thisQuery['length']))
             readNums.append(len(thisQuery.index))
