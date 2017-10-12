@@ -247,10 +247,10 @@ def parse_fastq_length_meanqual(fastq):
     gzip_magic = "\x1f\x8b\x08"
     gzipped = False
 
-
     def file_type(filename):
         with open(filename) as f:
-            file_start = f.read(max_len)
+            file_start = f.read(3)
+            print(file_start)
             if file_start.startswith(gzip_magic):
                 gzipped = True
 
