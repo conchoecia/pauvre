@@ -7,6 +7,8 @@ This package currently hosts one script for plotting.
 - transparency is the default
 
 ## Updates:
+- 20171012 - made `pauvre stats` more consistently produce useful histograms.
+  `pauvre stats` now also calculates some statistics for different size ranges.
 - 20170529 - added automatic scaling to the input fastq file. It
   scales to show the highest read quality and the top 99th percentile
   of reads by length.
