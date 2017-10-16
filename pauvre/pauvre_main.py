@@ -224,6 +224,11 @@ def main():
                                metavar='FASTQ',
                                action=FullPaths,
                                help='The input FASTQ file.')
+    parser_stats.add_argument('-H', '--histogram',
+                               action='store_true',
+                               help="""Make a histogram of the read lengths and
+                               saves it to a new file""") 
+
     parser_stats.set_defaults(func=run_subtool)
 
     #############

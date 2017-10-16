@@ -16,6 +16,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with pauvre.  If not, see <http://www.gnu.org/licenses/>.
+
+#TODO: make a function to nicely print out the pandas dataframes
+
 """
 Program: pauvre stats
 
@@ -58,7 +61,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.misc import factorial
 
-def stats(fastqName, lengths, meanQuals):
+def stats(fastqName, lengths, meanQuals, histogram):
     """
     arguments:
      <lengths> a list of read lengths
@@ -170,7 +173,6 @@ def stats(fastqName, lengths, meanQuals):
         qualBinList = list(np.arange(0, maxQual + increment_by, increment_by))
         increment_by += 0.5
 
-
     df = pd.DataFrame({'length': lengths,
                        'qual'  : meanQuals})
 
@@ -197,22 +199,40 @@ def stats(fastqName, lengths, meanQuals):
         dataDf = pd.DataFrame(tables[key], columns=["Q{}".format(x) for x in qualBinList])
         # add the min lengths as a column
         dataDf.insert(0, 'minLen', lengthBinList)
-        dataframeStr = dataDf.to_string(index=False)
-        # this is the char width of the whole table printed
-        lendataframeStr = len(dataframeStr.split('\n')[0])
-        # this is the char width of the minlen portion of the printed table
-        minLenLen =  len(dataframeStr.split()[0])
-        blank = " " * minLenLen
-        # center the text on this offset as the table title
-        txtoffset = lendataframeStr - minLenLen
-        print_string += "\n{}{:^{offset}}\n".format(
-            blank, key, offset=txtoffset)
-        print_string += dataframeStr + "\n"
+        print_string += pretty_print_table(dataDf, key)
+
+    # now make a histogram with read lengths
+    if histogram:
+        # histo_values is (length, num reads of that length)
+        histoValues = []
+        for i in range(0, max(lengths) + 1, 1):
+           counts = lengths.count(i)
+           histoValues.append( (i,counts) )
+        df = pd.DataFrame(histoValues)
+        #df = df.transpose()
+        df.columns = ['readLen', 'readCount']
+        df.to_csv("{}.hist.csv".format(fastqBase.split('.')[0]), index=False)
+
     print(print_string)
+
+def pretty_print_table(df, title):
+    print_string = ""
+    dataframeStr = df.to_string(index=False)
+    # this is the char width of the whole table printed
+    lendataframeStr = len(dataframeStr.split('\n')[0])
+    # this is the char width of the minlen portion of the printed table
+    minLenLen =  len(dataframeStr.split()[0])
+    blank = " " * minLenLen
+    # center the text on this offset as the table title
+    txtoffset = lendataframeStr - minLenLen
+    print_string += "\n{}{:^{offset}}\n".format(
+        blank, title, offset=txtoffset)
+    print_string += dataframeStr + "\n"
+    return print_string
 
 def run(args):
     """This just opens the fastq file and passes the info to the stats() function.
     This is a wrapper function that is accessed by pauvre_main.
     Useful since we can call stats() independently from other pauvre programs."""
     lengths, meanQuals = parse_fastq_length_meanqual(args.fastq)
-    stats(args.fastq, lengths, meanQuals)
+    stats(args.fastq, lengths, meanQuals, args.histogram)
