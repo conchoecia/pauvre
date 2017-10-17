@@ -118,31 +118,32 @@ def stats(fastqName, lengths, meanQuals, histogram):
     print_string = ""
     for this_size in analysis_sizes:
         these_lengths = [x for x in lengths if x >= this_size]
-        print_string += "# Fastq stats for {}, reads >= {}bp\n".format(fastqBase,this_size)
-        print_string += "numReads: {}\n".format(len(these_lengths))
-        print_string += "%totalNumReads: {0:.2f}\n".format((len(these_lengths)/len(lengths))*100)
-        print_string += "numBasepairs: {}\n".format(sum(these_lengths))
-        print_string += "%totalBasepairs: {0:.2f}\n".format((sum(these_lengths)/sum(lengths))*100)
-        print_string += "meanLen: {}\n".format(np.mean(these_lengths))
-        print_string += "medianLen: {}\n".format(np.median(these_lengths))
-        print_string += "minLen: {}\n".format(min(these_lengths))
-        maxLen = max(these_lengths)
-        print_string += "maxLen: {}\n".format(maxLen)
+        if these_lengths:
+            print_string += "# Fastq stats for {}, reads >= {}bp\n".format(fastqBase,this_size)
+            print_string += "numReads: {}\n".format(len(these_lengths))
+            print_string += "%totalNumReads: {0:.2f}\n".format((len(these_lengths)/len(lengths))*100)
+            print_string += "numBasepairs: {}\n".format(sum(these_lengths))
+            print_string += "%totalBasepairs: {0:.2f}\n".format((sum(these_lengths)/sum(lengths))*100)
+            print_string += "meanLen: {}\n".format(np.mean(these_lengths))
+            print_string += "medianLen: {}\n".format(np.median(these_lengths))
+            print_string += "minLen: {}\n".format(min(these_lengths))
+            maxLen = max(these_lengths)
+            print_string += "maxLen: {}\n".format(maxLen)
 
-        #calculate the N50
-        fiftypercent = 0.5 * sum(these_lengths)
-        N50          = 0
-        L50          = 0
-        lenSum       = 0
-        count        = 0
-        for val in sorted(these_lengths, reverse=True):
-            lenSum += val
-            count += 1
-            if lenSum >= fiftypercent:
-                print_string += "N50: {}\n".format(int(val))
-                print_string += "L50: {}\n".format(count)
-                break
-        print_string += "\n"
+            #calculate the N50
+            fiftypercent = 0.5 * sum(these_lengths)
+            N50          = 0
+            L50          = 0
+            lenSum       = 0
+            count        = 0
+            for val in sorted(these_lengths, reverse=True):
+                lenSum += val
+                count += 1
+                if lenSum >= fiftypercent:
+                    print_string += "N50: {}\n".format(int(val))
+                    print_string += "L50: {}\n".format(count)
+                    break
+            print_string += "\n"
 
     #This block calculates the number of length bins for this data set
     lengthBinList = []
