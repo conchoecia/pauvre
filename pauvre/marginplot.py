@@ -181,7 +181,6 @@ def generate_legend(panel, counts, color):
     panel.set_ylabel('Number of Reads')
 
 def margin_plot(args):
-    print(args)
     rc.update_rcParams()
     read_lengths, read_mean_quals, df = parse_fastq_length_meanqual(args.fastq)
     df = filter_fastq_length_meanqual(df, args.filt_minlen, args.filt_maxlen, args.filt_minqual, args.filt_maxqual)
