@@ -182,7 +182,7 @@ def margin_plot(args):
 
     rc.update_rcParams()
     read_lengths, read_mean_quals = parse_fastq_length_meanqual(args.fastq)
-    stats(args.fastq, read_lengths, read_mean_quals)
+    stats(args.fastq, read_lengths, read_mean_quals, False)
 
 
     # 250, 231, 34 light yellow
