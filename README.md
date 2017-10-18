@@ -23,7 +23,7 @@ This package currently hosts four scripts for plotting and/or printing stats.
 
 ## Updates:
 - 20171018 - v0.1.8 - you can now filter reads and adjust the plotting viewing window. 
-  See below for a demonstration. I added the following options:
+  [See below for a demonstration.](#filter-reads-and-adjust-viewing-window) I added the following options:
 
 ```
   --filt_maxlen FILT_MAXLEN
