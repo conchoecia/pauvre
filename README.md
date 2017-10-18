@@ -1,4 +1,4 @@
-## pauvre: a plotting package designed for ~~nanopore~~ long reads
+## pauvre: a plotting package designed for nanopore and PacBio long reads
 
 This package currently hosts four scripts for plotting and/or printing stats.
 
