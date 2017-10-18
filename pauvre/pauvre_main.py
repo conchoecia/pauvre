@@ -39,7 +39,8 @@ class FullPaths(argparse.Action):
                 os.path.abspath(os.path.expanduser(values)))
 
 class FullPathsList(argparse.Action):
-    """Expand user- and relative-paths"""
+    """Expand user- and relative-paths when a list of paths is passed to the
+    program"""
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest,
                 [os.path.abspath(os.path.expanduser(value)) for value in values])
@@ -47,8 +48,8 @@ class FullPathsList(argparse.Action):
 def run_subtool(parser, args):
     if args.command == 'marginplot':
         import pauvre.marginplot as submodule
-    elif args.command == 'deathstar':
-        import pauvre.deathstar as submodule
+    elif args.command == 'redwood':
+        import pauvre.redwood as submodule
     elif args.command == 'stats':
         import pauvre.stats as submodule
     elif args.command == 'synplot':
@@ -100,15 +101,41 @@ def main():
                                Use --title "Crustacean's DNA read quality"
                                if you need single quote or apostrophe
                                inside title.""")
-    parser_mnplot.add_argument('--maxlen',
-                               metavar='MAXLEN',
+    parser_mnplot.add_argument('--filt_maxlen',
                                type=int,
-                               help="""This sets the max read length to plot.""")
-    parser_mnplot.add_argument('-m', '--maxqual',
-                               metavar='MAXQUAL',
-                               type=int,
+                               help="""This sets the max read length filter reads.""")
+    parser_mnplot.add_argument('--filt_maxqual',
+                               type=float,
                                help="""This sets the max mean read quality
-                               to plot.""")
+                               to filter reads.""")
+    parser_mnplot.add_argument('--filt_minlen',
+                               type=int,
+                               default = 0,
+                               help="""This sets the min read length to
+                               filter reads.""")
+    parser_mnplot.add_argument('--filt_minqual',
+                               type=float,
+                               default = 0,
+                               help="""This sets the min mean read quality
+                               to filter reads.""")
+    parser_mnplot.add_argument('--plot_maxlen',
+                               type=int,
+                               help="""Sets the maximum viewing area in the
+                               length dimension.""")
+    parser_mnplot.add_argument('--plot_maxqual',
+                               type=float,
+                               help="""Sets the maximum viewing area in the
+                               quality dimension.""")
+    parser_mnplot.add_argument('--plot_minlen',
+                               type=int,
+                               default = 0,
+                               help="""Sets the minimum viewing area in the
+                               length dimension.""")
+    parser_mnplot.add_argument('--plot_minqual',
+                               type=float,
+                               default = 0,
+                               help="""Sets the minimum viewing area in the
+                               quality dimension.""")
     parser_mnplot.add_argument('--lengthbin',
                                metavar='LENGTHBIN',
                                type=int,
@@ -144,24 +171,24 @@ def main():
     parser_mnplot.set_defaults(func=run_subtool)
 
     #############
-    # deathstar
+    # redwood
     #############
-    parser_dsplot = subparsers.add_parser('deathstar',
-                                        help='make a deathstar plot from a bam file')
-    parser_dsplot.add_argument('-M','--main_bam',
+    parser_rwplot = subparsers.add_parser('redwood',
+                                        help='make a redwood plot from a bam file')
+    parser_rwplot.add_argument('-M','--main_bam',
                                metavar='mainbam',
                                action=FullPaths,
                                help='The input filepath for the bam file to plot')
-    parser_dsplot.add_argument('-R','--rnaseq_bam',
+    parser_rwplot.add_argument('-R','--rnaseq_bam',
                                metavar='rnabam',
                                action=FullPaths,
                                help='The input filepath for the rnaseq bam file to plot')
-    parser_dsplot.add_argument('--gff',
+    parser_rwplot.add_argument('--gff',
                                metavar='gff',
                                action=FullPaths,
                                help="""The input filepath for the gff annotation
                                to plot""")
-    parser_dsplot.add_argument('--fileform',
+    parser_rwplot.add_argument('--fileform',
                                dest='fileform',
                                metavar='STRING',
                                choices=['png','pdf', 'eps', 'jpeg', 'jpg',
@@ -170,25 +197,27 @@ def main():
                                default=['png'],
                                nargs='+',
                                help='Which output format would you like? Def.=png')
-    parser_dsplot.add_argument('--sort',
+    parser_rwplot.add_argument('--sort',
                                dest='sort',
                                choices=['ALNLEN', 'TRULEN', 'MAPLEN', 'POS'],
                                default='ALNLEN',
                                help="""What value to use to sort the order in
                                which the reads are plotted?""")
-    parser_dsplot.add_argument('--small_start',
+    parser_rwplot.add_argument('--small_start',
                                dest='small_start',
                                choices=['inside', 'outside'],
                                default='inside',
                                help="""This determines where the shortest of the
-                               filtered reads will appear on the deathstar plot:
-                               on the outside or on the inside?""")
-    parser_dsplot.add_argument('--query',
+                               filtered reads will appear on the redwood plot:
+                               on the outside or on the inside? The default
+                               option puts the longest reads on the outside and
+                               the shortest reads on the inside.""")
+    parser_rwplot.add_argument('--query',
                                dest='query',
                                default=['ALNLEN >= 10000','MAPLEN < reflength'],
                                nargs='+',
                                help='Query your reads to change plotting options')
-    parser_dsplot.add_argument('-d', '--doubled',
+    parser_rwplot.add_argument('-d', '--doubled',
                                dest='doubled',
                                choices=['main','rnaseq'],
                                default=[],
@@ -198,22 +227,27 @@ def main():
                                plotting errors. Accepts multiple arguments.
                                'main' is for the sam file passed with --sam,
                                'rnaseq' is for the sam file passed with --rnaseq""")
-    parser_dsplot.add_argument('--dpi',
+    parser_rwplot.add_argument('--dpi',
                                metavar='dpi',
                                default=600,
                                type=int,
                                help="""Change the dpi from the default 600
                                if you need it higher""")
-    parser_dsplot.add_argument('-I', '--interlace',
+    parser_rwplot.add_argument('-I', '--interlace',
                                action='store_true',
                                default=False,
                                help="""Interlace the reads so the pileup plot
                                        looks better""")
-    parser_dsplot.add_argument('-L', '--log',
+    parser_rwplot.add_argument('-i', '--invert',
+                               action='store_true',
+                               default=False,
+                               help="""invert the image so that it looks better
+                               on a dark backgroun. DOESN'T DO ANYTHING.""")
+    parser_rwplot.add_argument('-L', '--log',
                                action='store_true',
                                default=False,
                                help="""Plot the RNAseq track with a log scale""")
-    parser_dsplot.set_defaults(func=run_subtool)
+    parser_rwplot.set_defaults(func=run_subtool)
 
     #############
     # stats
@@ -244,6 +278,13 @@ def main():
                                 nargs = '+',
                                 help="""The input filepath for the gff annotation
                                 to plot""")
+    parser_synplot.add_argument('--gff_labels',
+                                metavar='gff_labels',
+                                type = str,
+                                nargs = '+',
+                                help="""In case the gff names and sequence names
+                                don't match, change the labels that will appear
+                                over the text.""")
     parser_synplot.add_argument('--dpi',
                                 metavar='dpi',
                                 default=600,
@@ -269,6 +310,49 @@ def main():
                                 help="""Performs some internal corrections if
                                 the gff annotation includes the stop
                                 codons in the coding sequences.""")
+    parser_synplot.add_argument('--center_on',
+                                type = str,
+                                default = None,
+                                help="""centers the plot around the gene that
+                                you pass as an argument""")
+    parser_synplot.add_argument('--start_with_aligned_genes',
+                                action='store_true',
+                                default = False,
+                                help="""Minimizes the number of intersections
+                                but only selects combos where the first gene in
+                                each sequence is aligned.""")
+    parser_synplot.add_argument('--fileform',
+                               dest='fileform',
+                               metavar='STRING',
+                               choices=['png','pdf', 'eps', 'jpeg', 'jpg',
+                                        'pdf', 'pgf', 'ps', 'raw', 'rgba',
+                                        'svg', 'svgz', 'tif', 'tiff'],
+                               default=['png'],
+                               nargs='+',
+                               help='Which output format would you like? Def.=png')
+    parser_synplot.add_argument('-o', '--output-base-name',
+                               dest='BASENAME',
+                               help='Specify a base name for the output file('
+                                's). The input file base name is the '
+                                'default.')
+    parser_synplot.add_argument('-n', '--no-transparent',
+                               dest='TRANSPARENT',
+                               action='store_false',
+                               help="""Not the TV show. Specify this option if
+                               you don't want a transparent background. Default
+                               is on.""")
+    parser_synplot.add_argument('--sandwich',
+                                action='store_true',
+                                default = False,
+                                help="""Put an additional copy of the first gff
+                                file on the bottom of the plot for comparison.""")
+
+
+
+
+
+
+
 
     parser_synplot.set_defaults(func=run_subtool)
 
@@ -286,7 +370,7 @@ def main():
 
     # If there were no args, but someone selected a program,
     #  print the program's help.
-    commandDict={'deathstar' : parser_dsplot.print_help,
+    commandDict={'redwood' : parser_rwplot.print_help,
                  'marginplot': parser_mnplot.print_help,
                  'stats'     : parser_stats.print_help}
 

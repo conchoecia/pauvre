@@ -1,12 +1,51 @@
-## pauvre: a plotting package designed for nanopore reads
+## pauvre: a plotting package designed for ~~nanopore~~ long reads
 
-This package currently hosts one script for plotting.
+This package currently hosts four scripts for plotting and/or printing stats.
 
 - `pauvre marginplot`
   - takes a fastq file as input and outputs a marginal histogram with a heatmap.
-- transparency is the default
+- `pauvre stats`
+  - Takes a fastq file as input and prints out a table of stats, including how many basepairs/reads there are for a length/mean quality cutoff.
+  - This is also automagically called when using `pauvre marginplot`
+- `pauvre redwood`
+  - I am happy to introduce the redwood plot to the world as a method
+    of representing circular genomes. A redwood plot contains long
+    reads as "rings" on the inside, a gene annotation
+    "cambrium/phloem", and a RNAseq "bark". The input is `.bam` files
+    for the long reads and RNAseq data, and a `.gff` file for the
+    annotation. More details to follow as we document this program
+    better...
+- `pauvre synteny`
+  - Makes a synteny plot of circular genomes. Finds the most
+    parsimonius rotation to display the synteny of all the input
+    genomes with the fewest crossings-over. Input is one `.gff` file
+    per circular genome and one directory of gene alignments.
 
 ## Updates:
+- 20171018 - v0.1.8 - you can now filter reads and adjust the plotting viewing window. 
+  See below for a demonstration. I added the following options:
+
+```
+  --filt_maxlen FILT_MAXLEN
+                        This sets the max read length filter reads.
+  --filt_maxqual FILT_MAXQUAL
+                        This sets the max mean read quality to filter reads.
+  --filt_minlen FILT_MINLEN
+                        This sets the min read length to filter reads.
+  --filt_minqual FILT_MINQUAL
+                        This sets the min mean read quality to filter reads.
+  --plot_maxlen PLOT_MAXLEN
+                        Sets the maximum viewing area in the length dimension.
+  --plot_maxqual PLOT_MAXQUAL
+                        Sets the maximum viewing area in the quality
+                        dimension.
+  --plot_minlen PLOT_MINLEN
+                        Sets the minimum viewing area in the length dimension.
+  --plot_minqual PLOT_MINQUAL
+                        Sets the minimum viewing area in the quality
+                        dimension.
+```
+- 20171014 - uploading information on `pauvre redwood` and `pauvre synteny` usage.
 - 20171012 - made `pauvre stats` more consistently produce useful histograms.
   `pauvre stats` now also calculates some statistics for different size ranges.
 - 20170529 - added automatic scaling to the input fastq file. It
@@ -75,6 +114,11 @@ minLen    Q0   Q5  Q10  Q15  Q17.5  Q20  Q21.5  Q25  Q25.5  Q30
     lower maxlen and higher maxqual.
     - `pauvre marginplot --maxlen 4000 --maxqual 25 --lengthbin 50 --fileform pdf png --qualbin 0.5 --fastq miniDSMN15.fastq`
     - ![example1](files/miniDSMN15.png)
+  - Filter out reads with a mean quality less than 5, and a length
+    less than 800. Zoom in to plot only mean quality of at least 4 and
+    read length at least 500bp.
+    - `pauvre marginplot -f miniDSMN15.fastq --filt_minqual 5 --filt_minlen 800 -y --plot_minlen 500 --plot_minqual 4`
+    - ![test4](files/test4.png)
   - Plot ONT 1D data with a large tail
     - `pauvre marginplot --maxlen 100000 --maxqual 15 --lengthbin 500  <myfile>.fastq`
   - Get more resolution on lengths

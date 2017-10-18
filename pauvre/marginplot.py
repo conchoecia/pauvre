@@ -25,7 +25,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import pandas as pd
 import os.path as opath
-from pauvre.functions import parse_fastq_length_meanqual, print_images
+from pauvre.functions import parse_fastq_length_meanqual, print_images, filter_fastq_length_meanqual
 from pauvre.stats import stats
 import pauvre.rcparams as rc
 import logging
@@ -72,7 +72,11 @@ def generate_panel(panel_left, panel_bottom, panel_width, panel_height,
 
 
 def _generate_histogram_bin_patches(panel, bins, bin_values, horizontal=True):
+    """This helper method generates the histogram that is added to the panel.
 
+    In this case, horizontal = True applies to the mean quality histogram.
+    So, horizontal = False only applies to the length histogram.
+    """
     l_width = 0.0
     f_color = (0.5, 0.5, 0.5)
     e_color = (0, 0, 0)
@@ -82,16 +86,14 @@ def _generate_histogram_bin_patches(panel, bins, bin_values, horizontal=True):
             bottom = 0
             width = bins[step + 1] - bins[step]
             height = bin_values[step]
-
             hist_rectangle = mplpatches.Rectangle((left, bottom), width, height,
                                                   linewidth=l_width,
                                                   facecolor=f_color,
                                                   edgecolor=e_color)
             panel.add_patch(hist_rectangle)
-
     else:
         for step in np.arange(0, len(bin_values), 1):
-            left = 1
+            left = 0
             bottom = bins[step]
             width = bin_values[step]
             height = bins[step + 1] - bins[step]
@@ -103,9 +105,9 @@ def _generate_histogram_bin_patches(panel, bins, bin_values, horizontal=True):
             panel.add_patch(hist_rectangle)
 
 
-def generate_histogram(panel, data_list, max_plot_length, bin_interval,
-                       hist_horizontal=True, left_spine=True,
-                       bottom_spine=True,
+def generate_histogram(panel, data_list, max_plot_length, min_plot_length,
+                       bin_interval, hist_horizontal=True,
+                       left_spine=True, bottom_spine=True,
                        top_spine=False, right_spine=False, x_label=None,
                        y_label=None):
 
@@ -113,12 +115,14 @@ def generate_histogram(panel, data_list, max_plot_length, bin_interval,
 
     bin_values, bins2 = np.histogram(data_list, bins)
 
+    # hist_horizontal is used for quality
     if hist_horizontal:
-        panel.set_xlim([0, max_plot_length])
+        panel.set_xlim([min_plot_length, max_plot_length])
         panel.set_ylim([0, max(bin_values * 1.1)])
+    # and hist_horizontal == Fale is for read length
     else:
         panel.set_xlim([0, max(bin_values * 1.1)])
-        panel.set_ylim([0, max_plot_length])
+        panel.set_ylim([min_plot_length, max_plot_length])
 
     # Generate histogram bin patches, depending on whether we're plotting
     # vertically or horizontally
@@ -135,13 +139,14 @@ def generate_histogram(panel, data_list, max_plot_length, bin_interval,
         panel.set_xlabel(x_label)
 
 
-def generate_heat_map(panel, data_frame, max_plot_length, max_plot_qual, color):
+def generate_heat_map(panel, data_frame, min_plot_length, min_plot_qual,
+                      max_plot_length, max_plot_qual, color):
     hex_this = data_frame.query('length<{} and meanQual<{}'.format(
         max_plot_length, max_plot_qual))
     # print(hexThis)
 
-    panel.set_xlim([0, max_plot_qual])
-    panel.set_ylim([0, max_plot_length])
+    panel.set_xlim([min_plot_qual, max_plot_qual])
+    panel.set_ylim([min_plot_length, max_plot_length])
     # This single line controls plotting the hex bins in the panel
     hex_vals = panel.hexbin(hex_this['meanQual'], hex_this['length'], gridsize=49,
                             linewidths=0.0, cmap=color)
@@ -175,13 +180,11 @@ def generate_legend(panel, counts, color):
     panel.yaxis.set_label_position("right")
     panel.set_ylabel('Number of Reads')
 
-
-
-
 def margin_plot(args):
-
+    print(args)
     rc.update_rcParams()
-    read_lengths, read_mean_quals = parse_fastq_length_meanqual(args.fastq)
+    read_lengths, read_mean_quals, df = parse_fastq_length_meanqual(args.fastq)
+    df = filter_fastq_length_meanqual(df, args.filt_minlen, args.filt_maxlen, args.filt_minqual, args.filt_maxqual)
     stats(args.fastq, read_lengths, read_mean_quals, False)
 
 
@@ -208,8 +211,6 @@ def margin_plot(args):
     # First, the most direct and explicit:
     purple1 = LinearSegmentedColormap('Purple1', pdict)
 
-    # make the pandas dataset to query
-    df = pd.DataFrame(list(zip(read_lengths, read_mean_quals)), columns=['length', 'meanQual'])
     # only keep the dataframes that are finite
     df = df.dropna()
 
@@ -308,11 +309,12 @@ def margin_plot(args):
                                   label_right_tick_param='on')
     panels.append(legend_panel)
 
-    # Set max length
-    if args.maxlen:
-        max_plot_length = args.maxlen
+    # Set min and max viewing window for length
+    if args.plot_maxlen:
+        max_plot_length = args.plot_maxlen
     else:
-        max_plot_length = int(np.percentile(read_lengths, 99))
+        max_plot_length = int(np.percentile(df['length'], 99))
+    min_plot_length = args.plot_minlen
 
     # Set length bin sizes
     if args.lengthbin:
@@ -323,11 +325,12 @@ def margin_plot(args):
 
     # length_bins = np.arange(0, max_plot_length, length_bin_interval)
 
-    # Set max quality
-    if args.maxqual:
-        max_plot_qual = args.maxqual
+    # Set max and min viewing window for quality
+    if args.plot_maxqual:
+        max_plot_qual = args.plot_maxqual
     else:
-        max_plot_qual = max(np.ceil(read_mean_quals))
+        max_plot_qual = max(np.ceil(df['meanQual']))
+    min_plot_qual = args.plot_minqual
 
     # Set qual bin sizes
     if args.qualbin:
@@ -338,21 +341,19 @@ def margin_plot(args):
     qual_bins = np.arange(0, max_plot_qual, qual_bin_interval)
 
     # Generate length histogram
-
-
-    generate_histogram(length_panel, read_lengths, max_plot_length,
+    generate_histogram(length_panel, df['length'], max_plot_length, min_plot_length,
                        length_bin_interval, hist_horizontal=False,
                        y_label='Read Length', bottom_spine=length_bottom_spine)
 
     # Generate quality histogram
-    generate_histogram(qual_panel, read_mean_quals, max_plot_qual,
+    generate_histogram(qual_panel, df['meanQual'], max_plot_qual, min_plot_qual,
                        qual_bin_interval, x_label='Phred Quality',
                        y_label=qual_y_label, left_spine=qual_left_spine)
 
 
     # Generate heat map
-    counts = generate_heat_map(heat_map_panel, df, max_plot_length,
-                               max_plot_qual, purple1)
+    counts = generate_heat_map(heat_map_panel, df, min_plot_length, min_plot_qual,
+                               max_plot_length, max_plot_qual, purple1)
 
     # Generate legend
     generate_legend(legend_panel, counts, purple1)

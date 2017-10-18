@@ -241,10 +241,12 @@ def parse_fastq_length_meanqual(fastq):
      <fastq> the fastq file path. Hopefully it has been verified to exist already
 
     purpose:
-     This function parses a fastq
+     This function parses a fastq and returns a pandas dataframe of read lengths
+     and read meanQuals.
     """
-
-
+    # First try to open the file with the gzip package. It will crash
+    #  if the file is not gzipped, so this is an easy way to test if
+    #  the fastq file is gzipped or not.
     try:
         handle = gzip.open(fastq, "rt")
         length, meanQual = _fastq_parse_helper(handle)
@@ -253,7 +255,20 @@ def parse_fastq_length_meanqual(fastq):
         length, meanQual = _fastq_parse_helper(handle)
 
     handle.close()
-    return length, meanQual
+    df = pd.DataFrame(list(zip(length, meanQual)), columns=['length', 'meanQual'])
+    return length, meanQual, df
+
+def filter_fastq_length_meanqual(df, min_len, max_len,\
+                                 min_mqual, max_mqual):
+    print(df)
+    querystring = "length >= {0} and meanQual >= {1}".format(min_len, min_mqual)
+    if max_len != None:
+        querystring += " and length <= {}".format(max_len)
+    if max_mqual != None:
+        querystring += " and meanQual <= {}".format(max_mqual)
+    print(querystring)
+    filtdf = df.query(querystring)
+    return filtdf
 
 def _fastq_parse_helper(handle):
     length = []
@@ -286,7 +301,7 @@ def _phred_to_erate(phred_values):
     """
     if not isinstance(phred_values, np.ndarray):
         phred_values = np.array(phred_values)
-    return np.power(10, (-1 * phred_values)/10)
+    return np.power(10, (-1 * (phred_values/10)) )
 
 def _erate_to_phred(erate_values):
     """
