@@ -25,6 +25,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import pandas as pd
 import os.path as opath
+from sys import stderr
 from pauvre.functions import parse_fastq_length_meanqual, print_images, filter_fastq_length_meanqual
 from pauvre.stats import stats
 import pauvre.rcparams as rc
@@ -143,7 +144,6 @@ def generate_heat_map(panel, data_frame, min_plot_length, min_plot_qual,
                       max_plot_length, max_plot_qual, color):
     hex_this = data_frame.query('length<{} and meanQual<{}'.format(
         max_plot_length, max_plot_qual))
-    # print(hexThis)
 
     panel.set_xlim([min_plot_qual, max_plot_qual])
     panel.set_ylim([min_plot_length, max_plot_length])
@@ -357,6 +357,12 @@ def margin_plot(args):
     # Generate legend
     generate_legend(legend_panel, counts, purple1)
 
+    # inform the user of the plotting window
+    print("""plotting in the following window:
+          {0} <= Q-score (x-axis) <= {1}
+          {2} <= length  (y-axis) <= {3}""".format(
+          min_plot_qual, max_plot_qual, min_plot_length, max_plot_length),
+          file = stderr)
     # Print image(s)
     if args.BASENAME is None:
         file_base = opath.splitext(opath.basename(args.fastq))[0]

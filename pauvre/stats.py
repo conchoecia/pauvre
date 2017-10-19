@@ -153,9 +153,9 @@ def stats(fastqName, lengths, meanQuals, histogram):
                 (100000, 5000),
                 (500000, 20000),
                 (1000000, 50000),
-                (10000000000, 50000)]
+                (10000000000, 100000)]
     current_val = 0
-    for i in range(0, len(size_map) - 1):
+    for i in range(0, len(size_map)):
         this_max_size = size_map[i][0]
         # tss = this step size
         tss = size_map[i][1]
@@ -235,5 +235,5 @@ def run(args):
     """This just opens the fastq file and passes the info to the stats() function.
     This is a wrapper function that is accessed by pauvre_main.
     Useful since we can call stats() independently from other pauvre programs."""
-    lengths, meanQuals = parse_fastq_length_meanqual(args.fastq)
+    lengths, meanQuals, df = parse_fastq_length_meanqual(args.fastq)
     stats(args.fastq, lengths, meanQuals, args.histogram)

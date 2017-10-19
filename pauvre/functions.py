@@ -22,6 +22,7 @@ import copy
 import numpy as np
 import os
 import pandas as pd
+from sys import stderr
 import os.path as opath
 import matplotlib.pyplot as plt
 import gzip
@@ -260,13 +261,12 @@ def parse_fastq_length_meanqual(fastq):
 
 def filter_fastq_length_meanqual(df, min_len, max_len,\
                                  min_mqual, max_mqual):
-    print(df)
     querystring = "length >= {0} and meanQual >= {1}".format(min_len, min_mqual)
     if max_len != None:
         querystring += " and length <= {}".format(max_len)
     if max_mqual != None:
         querystring += " and meanQual <= {}".format(max_mqual)
-    print(querystring)
+    print("Keeping reads that satisfy: {}".format(querystring), file = stderr)
     filtdf = df.query(querystring)
     return filtdf
 
