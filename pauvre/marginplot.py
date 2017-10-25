@@ -368,23 +368,4 @@ def run(args):
     df = filter_fastq_length_meanqual(
         df, args.filt_minlen, args.filt_maxlen, args.filt_minqual, args.filt_maxqual)
     stats(args.fastq, read_lengths, read_mean_quals, False)
-    if args.BASENAME is None:
-        file_base = opath.splitext(opath.basename(args.fastq))[0]
-    else:
-        file_base = args.BASENAME
-    # margin_plot(
-    #     df=df.dropna(),
-    #     file_base=file_base,
-    #     fileform=args.fileform,
-    #     dpi=args.dpi,
-    #     transparent=args.TRANSPARENT,
-    #     Y_AXES=args.Y_AXES,
-    #     title=args.title,
-    #     qualbin=args.qualbin,
-    #     plot_maxqual=args.plot_maxqual,
-    #     plot_minqual=args.plot_minqual,
-    #     plot_maxlen=args.plot_maxlen,
-    #     plot_minlen=args.plot_minlen,
-    #     lengthbin=args.lengthbin
-    # )
     margin_plot(df=df.dropna(), **vars(args))
