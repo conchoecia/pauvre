@@ -180,19 +180,15 @@ def generate_legend(panel, counts, color):
     panel.yaxis.set_label_position("right")
     panel.set_ylabel('Number of Reads')
 
-def margin_plot(args):
-    rc.update_rcParams()
-    read_lengths, read_mean_quals, df = parse_fastq_length_meanqual(args.fastq)
-    df = filter_fastq_length_meanqual(df, args.filt_minlen, args.filt_maxlen, args.filt_minqual, args.filt_maxqual)
-    stats(args.fastq, read_lengths, read_mean_quals, False)
 
+def margin_plot(df, **kwargs):
+    rc.update_rcParams()
 
     # 250, 231, 34 light yellow
     # 67, 1, 85
     # R=np.linspace(65/255,1,101)
     # G=np.linspace(0/255, 231/255, 101)
     # B=np.linspace(85/255, 34/255, 101)
-
     # R=65/255, G=0/255, B=85/255
     Rf = 65 / 255
     Bf = 85 / 255
@@ -209,9 +205,6 @@ def margin_plot(args):
     # handling custom colormaps.
     # First, the most direct and explicit:
     purple1 = LinearSegmentedColormap('Purple1', pdict)
-
-    # only keep the dataframes that are finite
-    df = df.dropna()
 
     # set the figure dimensions
     fig_width = 1.61 * 3
@@ -236,7 +229,7 @@ def margin_plot(args):
     v_padding = 0.05
 
     # Set whether to include y-axes in histograms
-    if args.Y_AXES:
+    if kwargs["Y_AXES"]:
         length_bottom_spine = True
         length_bottom_tick = 'on'
         length_bottom_label = 'on'
@@ -291,11 +284,11 @@ def margin_plot(args):
                                     left_tick_param='off',
                                     label_left_tick_param='off')
     panels.append(heat_map_panel)
-    heat_map_panel.set_title(args.title)
+    heat_map_panel.set_title(kwargs["title"])
 
     # Legend panel
     legend_panel_left = fig_left_margin + length_panel_width + \
-                        heat_map_panel_width / fig_width + h_padding
+        heat_map_panel_width / fig_width + h_padding
     legend_panel_bottom = fig_bottom_margin + qual_panel_height + v_padding
     legend_panel_height = heat_map_panel_height / fig_height
     legend_panel = generate_panel(legend_panel_left, legend_panel_bottom,
@@ -309,15 +302,15 @@ def margin_plot(args):
     panels.append(legend_panel)
 
     # Set min and max viewing window for length
-    if args.plot_maxlen:
-        max_plot_length = args.plot_maxlen
+    if kwargs["plot_maxlen"]:
+        max_plot_length = kwargs["plot_maxlen"]
     else:
         max_plot_length = int(np.percentile(df['length'], 99))
-    min_plot_length = args.plot_minlen
+    min_plot_length = kwargs["plot_minlen"]
 
     # Set length bin sizes
-    if args.lengthbin:
-        length_bin_interval = args.lengthbin
+    if kwargs["lengthbin"]:
+        length_bin_interval = kwargs["lengthbin"]
     else:
         # Dividing by 80 is based on what looks good from experience
         length_bin_interval = int(max_plot_length / 80)
@@ -325,15 +318,15 @@ def margin_plot(args):
     # length_bins = np.arange(0, max_plot_length, length_bin_interval)
 
     # Set max and min viewing window for quality
-    if args.plot_maxqual:
-        max_plot_qual = args.plot_maxqual
+    if kwargs["plot_maxqual"]:
+        max_plot_qual = kwargs["plot_maxqual"]
     else:
         max_plot_qual = max(np.ceil(df['meanQual']))
-    min_plot_qual = args.plot_minqual
+    min_plot_qual = kwargs["plot_minqual"]
 
     # Set qual bin sizes
-    if args.qualbin:
-        qual_bin_interval = args.qualbin
+    if kwargs["qualbin"]:
+        qual_bin_interval = kwargs["qualbin"]
     else:
         # again, this is just based on what looks good from experience
         qual_bin_interval = max_plot_qual / 85
@@ -349,7 +342,6 @@ def margin_plot(args):
                        qual_bin_interval, x_label='Phred Quality',
                        y_label=qual_y_label, left_spine=qual_left_spine)
 
-
     # Generate heat map
     counts = generate_heat_map(heat_map_panel, df, min_plot_length, min_plot_qual,
                                max_plot_length, max_plot_qual, purple1)
@@ -362,15 +354,37 @@ def margin_plot(args):
           {0} <= Q-score (x-axis) <= {1}
           {2} <= length  (y-axis) <= {3}""".format(
           min_plot_qual, max_plot_qual, min_plot_length, max_plot_length),
-          file = stderr)
+          file=stderr)
     # Print image(s)
+    if kwargs["BASENAME"] is None:
+        file_base = opath.splitext(opath.basename(kwargs["fastq"]))[0]
+    else:
+        file_base = kwargs["BASENAME"]
+    print_images(file_base, kwargs["fileform"], kwargs["dpi"], kwargs["TRANSPARENT"])
+
+
+def run(args):
+    read_lengths, read_mean_quals, df = parse_fastq_length_meanqual(args.fastq)
+    df = filter_fastq_length_meanqual(
+        df, args.filt_minlen, args.filt_maxlen, args.filt_minqual, args.filt_maxqual)
+    stats(args.fastq, read_lengths, read_mean_quals, False)
     if args.BASENAME is None:
         file_base = opath.splitext(opath.basename(args.fastq))[0]
     else:
         file_base = args.BASENAME
-    transparent = args.TRANSPARENT
-    print_images(file_base, args.fileform, args.dpi, transparent)
-
-
-def run(args):
-    margin_plot(args)
+    # margin_plot(
+    #     df=df.dropna(),
+    #     file_base=file_base,
+    #     fileform=args.fileform,
+    #     dpi=args.dpi,
+    #     transparent=args.TRANSPARENT,
+    #     Y_AXES=args.Y_AXES,
+    #     title=args.title,
+    #     qualbin=args.qualbin,
+    #     plot_maxqual=args.plot_maxqual,
+    #     plot_minqual=args.plot_minqual,
+    #     plot_maxlen=args.plot_maxlen,
+    #     plot_minlen=args.plot_minlen,
+    #     lengthbin=args.lengthbin
+    # )
+    margin_plot(df=df.dropna(), **vars(args))
