@@ -61,13 +61,15 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.misc import factorial
 
-def stats(fastqName, lengths, meanQuals, histogram):
+def stats(df, fastqName, histogram):
     """
     arguments:
-     <lengths> a list of read lengths
-     <meanQuals> a list of mean read qualities
-     *NOTE* the indexing for each list is the same.
-            element <lengths>[0] is the same read as <meanQuals>[0]
+     <df>
+      - a pandas dataframe with cols ['length', 'meanQual'] that contains read
+         length and quality information
+     <fastqName>
+      - just the name of the fastq file. This is used for printing out headers
+         for the data tables.
 
     purpose:
      Calculate and output various stats about this fastq file. Currently
@@ -117,13 +119,13 @@ def stats(fastqName, lengths, meanQuals, histogram):
     analysis_sizes = [0, 1000, 5000, 10000]
     print_string = ""
     for this_size in analysis_sizes:
-        these_lengths = [x for x in lengths if x >= this_size]
-        if these_lengths:
+        these_lengths = df.loc[df["length"] >= this_size, "length"]
+        if len(these_lengths) > 0:
             print_string += "# Fastq stats for {}, reads >= {}bp\n".format(fastqBase,this_size)
             print_string += "numReads: {}\n".format(len(these_lengths))
-            print_string += "%totalNumReads: {0:.2f}\n".format((len(these_lengths)/len(lengths))*100)
+            print_string += "%totalNumReads: {0:.2f}\n".format((len(these_lengths)/len(df))*100)
             print_string += "numBasepairs: {}\n".format(sum(these_lengths))
-            print_string += "%totalBasepairs: {0:.2f}\n".format((sum(these_lengths)/sum(lengths))*100)
+            print_string += "%totalBasepairs: {0:.2f}\n".format((sum(these_lengths)/sum(df["length"]))*100)
             print_string += "meanLen: {}\n".format(np.mean(these_lengths))
             print_string += "medianLen: {}\n".format(np.median(these_lengths))
             print_string += "minLen: {}\n".format(min(these_lengths))
@@ -148,19 +150,28 @@ def stats(fastqName, lengths, meanQuals, histogram):
     #This block calculates the number of length bins for this data set
     lengthBinList = []
     # size_map = [(max size, step range)]
-    size_map = [(10000, 500),
+    size_map = [(1000, 250),
+                (10000, 500),
                 (40000, 1000),
                 (100000, 5000),
                 (500000, 20000),
                 (1000000, 50000),
                 (10000000000, 100000)]
+    #first, figure out where we will start the table
+    minlen = min(df["length"])
     current_val = 0
+    firstDone = False
     for i in range(0, len(size_map)):
         this_max_size = size_map[i][0]
         # tss = this step size
         tss = size_map[i][1]
         for this_bin in range(current_val, this_max_size, tss):
-            lengthBinList.append(this_bin)
+            if minlen < this_bin:
+                if not firstDone:
+                   lengthBinList.append(prev)
+                   firstDone = True
+                lengthBinList.append(this_bin)
+            prev = this_bin
         current_val = this_max_size
     # now figure out the largest bin
     first_index_gt_maxLen = next(i for i,v in enumerate(lengthBinList) if v > maxLen) + 1
@@ -170,12 +181,10 @@ def stats(fastqName, lengths, meanQuals, histogram):
     increment_by = 1
     while len(qualBinList) == 0 or len(qualBinList) > 15:
         #now set up the bins for mean PHRED
-        maxQual = int(np.ceil(max(meanQuals)))
-        qualBinList = list(np.arange(0, maxQual + increment_by, increment_by))
-        increment_by += 0.5
-
-    df = pd.DataFrame({'length': lengths,
-                       'qual'  : meanQuals})
+        minQual = int(np.floor(min(df["meanQual"])))
+        maxQual = int(np.ceil(max(df["meanQual"])))
+        qualBinList = list(np.arange(minQual, maxQual + increment_by, increment_by))
+        increment_by += 0.25
 
     #now make a table of read lengths
     # row = j
@@ -186,7 +195,7 @@ def stats(fastqName, lengths, meanQuals, histogram):
         dataNums = []
         readNums = []
         for i in range(len(qualBinList)):
-            thisQuery = df.query("length >= {} and qual >= {}".format(
+            thisQuery = df.query("length >= {} and meanQual >= {}".format(
                               lengthBinList[j], qualBinList[i]))
             dataNums.append(sum(thisQuery['length']))
             readNums.append(len(thisQuery.index))
@@ -235,5 +244,5 @@ def run(args):
     """This just opens the fastq file and passes the info to the stats() function.
     This is a wrapper function that is accessed by pauvre_main.
     Useful since we can call stats() independently from other pauvre programs."""
-    lengths, meanQuals, df = parse_fastq_length_meanqual(args.fastq)
+    df = parse_fastq_length_meanqual(args.fastq)
     stats(args.fastq, lengths, meanQuals, args.histogram)

@@ -364,8 +364,8 @@ def margin_plot(df, **kwargs):
 
 
 def run(args):
-    read_lengths, read_mean_quals, df = parse_fastq_length_meanqual(args.fastq)
-    df = filter_fastq_length_meanqual(
-        df, args.filt_minlen, args.filt_maxlen, args.filt_minqual, args.filt_maxqual)
-    stats(args.fastq, read_lengths, read_mean_quals, False)
+    df = parse_fastq_length_meanqual(args.fastq)
+    df = filter_fastq_length_meanqual(df, args.filt_minlen, args.filt_maxlen,
+                                      args.filt_minqual, args.filt_maxqual)
+    stats(df, args.fastq, False)
     margin_plot(df=df.dropna(), **vars(args))

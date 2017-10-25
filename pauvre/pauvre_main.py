@@ -262,6 +262,24 @@ def main():
                                action='store_true',
                                help="""Make a histogram of the read lengths and
                                saves it to a new file""") 
+    parser_stats.add_argument('--filt_maxlen',
+                               type=int,
+                               help="""This sets the max read length filter reads.""")
+    parser_stats.add_argument('--filt_maxqual',
+                               type=float,
+                               help="""This sets the max mean read quality
+                               to filter reads.""")
+    parser_stats.add_argument('--filt_minlen',
+                               type=int,
+                               default = 0,
+                               help="""This sets the min read length to
+                               filter reads.""")
+    parser_stats.add_argument('--filt_minqual',
+                               type=float,
+                               default = 0,
+                               help="""This sets the min mean read quality
+                               to filter reads.""")
+
 
     parser_stats.set_defaults(func=run_subtool)
 

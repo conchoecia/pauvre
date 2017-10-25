@@ -257,7 +257,7 @@ def parse_fastq_length_meanqual(fastq):
 
     handle.close()
     df = pd.DataFrame(list(zip(length, meanQual)), columns=['length', 'meanQual'])
-    return length, meanQual, df
+    return df
 
 def filter_fastq_length_meanqual(df, min_len, max_len,\
                                  min_mqual, max_mqual):
@@ -268,6 +268,8 @@ def filter_fastq_length_meanqual(df, min_len, max_len,\
         querystring += " and meanQual <= {}".format(max_mqual)
     print("Keeping reads that satisfy: {}".format(querystring), file = stderr)
     filtdf = df.query(querystring)
+    #filtdf["length"] = pd.to_numeric(filtdf["length"], errors='coerce')
+    #filtdf["meanQual"] = pd.to_numeric(filtdf["meanQual"], errors='coerce')
     return filtdf
 
 def _fastq_parse_helper(handle):

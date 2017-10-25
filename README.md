@@ -22,6 +22,11 @@ This package currently hosts four scripts for plotting and/or printing stats.
     per circular genome and one directory of gene alignments.
 
 ## Updates:
+- 20171025 - v0.1.82 - added some changes to make marginplot interface
+  with @wdecoster's [nanoPlot](https://github.com/wdecoster/NanoPlot)
+  package, and made `pauvre stats` only output data tables for
+  filtered reads. `pauvre stats` also now has the `--filt_maxlen`,
+  `--filt_maxqual`, `--filt_minlen`, and `--filt_minqual` options.
 - 20171018 - v0.1.8 - you can now filter reads and adjust the plotting viewing window. 
   [See below for a demonstration.](#filter-reads-and-adjust-viewing-window) I added the following options:
 
@@ -143,3 +148,4 @@ minLen    Q0   Q5  Q10  Q15  Q17.5  Q20  Q21.5  Q25  Q25.5  Q30
 
 @conchoecia (Darrin Schultz)
 @mebbert (Mark Ebbert)
+@wdecoster (Wouter De Coster)
