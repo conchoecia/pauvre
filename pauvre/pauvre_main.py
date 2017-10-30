@@ -148,6 +148,11 @@ def main():
                                dest='Y_AXES',
                                action='store_true',
                                help='Add Y-axes to both marginal histograms.')
+    parser_mnplot.add_argument('-q', '--quiet',
+                               dest='QUIET',
+                               action='store_true',
+                               help="""Tells marginplot to not print extraneous
+                               information to stdout.""")
     parser_mnplot.add_argument('--fileform',
                                dest='fileform',
                                metavar='STRING',

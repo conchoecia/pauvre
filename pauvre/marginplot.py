@@ -349,12 +349,13 @@ def margin_plot(df, **kwargs):
     # Generate legend
     generate_legend(legend_panel, counts, purple1)
 
-    # inform the user of the plotting window
-    print("""plotting in the following window:
-          {0} <= Q-score (x-axis) <= {1}
-          {2} <= length  (y-axis) <= {3}""".format(
-          min_plot_qual, max_plot_qual, min_plot_length, max_plot_length),
-          file=stderr)
+    # inform the user of the plotting window if not quiet mode
+    if not kwargs["QUIET"]:
+        print("""plotting in the following window:
+        {0} <= Q-score (x-axis) <= {1}
+        {2} <= length  (y-axis) <= {3}""".format(
+            min_plot_qual, max_plot_qual, min_plot_length, max_plot_length),
+              file=stderr)
     # Print image(s)
     if kwargs["BASENAME"] is None:
         file_base = opath.splitext(opath.basename(kwargs["fastq"]))[0]
