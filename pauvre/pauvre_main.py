@@ -29,7 +29,6 @@ logger = logging.getLogger('poretools')
 
 # pauvre imports
 import pauvre.version
-
 # This class is used in argparse to expand the ~. This avoids errors caused on
 # some systems.
 
@@ -70,7 +69,6 @@ class ArgumentParserWithDefaults(argparse.ArgumentParser):
         self.add_argument("-q", "--quiet", help="Do not output warnings to stderr",
                           action="store_true",
                           dest="QUIET")
-
 
 def main():
 
