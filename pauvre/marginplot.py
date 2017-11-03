@@ -355,13 +355,22 @@ def margin_plot(df, **kwargs):
         {0} <= Q-score (x-axis) <= {1}
         {2} <= length  (y-axis) <= {3}""".format(
             min_plot_qual, max_plot_qual, min_plot_length, max_plot_length),
-              file=stderr)
+            file=stderr)
     # Print image(s)
     if kwargs["BASENAME"] is None:
         file_base = opath.splitext(opath.basename(kwargs["fastq"]))[0]
     else:
         file_base = kwargs["BASENAME"]
-    print_images(file_base, kwargs["fileform"], kwargs["dpi"], kwargs["TRANSPARENT"])
+    if "path" in kwargs.keys():
+        path = kwargs["path"]
+    else:
+        path = None
+    print_images(
+        base_output_name=file_base,
+        image_formats=kwargs["fileform"],
+        dpi=kwargs["dpi"],
+        path=path,
+        transparent=kwargs["TRANSPARENT"])
 
 
 def run(args):
