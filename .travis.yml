@@ -10,9 +10,6 @@ python:
   - "3.6"
   - "3.6-dev"
 
-before_install:
-  - cp README.md README.rst
-
 install:
   - pip install -e .
 
