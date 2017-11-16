@@ -62,7 +62,8 @@ setup(name='pauvre',
           "matplotlib >= 2.0.2",
           "biopython >= 1.68",
           "pandas >= 0.20.1",
-          "numpy >= 1.12.1"
+          "numpy >= 1.12.1",
+          "scipy"
       ],
       entry_points={
           'console_scripts': ['pauvre=pauvre.pauvre_main:main'],
