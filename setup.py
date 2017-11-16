@@ -26,7 +26,7 @@ import os
 from setuptools import setup, find_packages
 
 version_py = os.path.join(os.path.dirname(__file__), 'pauvre', 'version.py')
-version = open(version_py).read().strip().split('=')[-1].replace('"','').strip()
+version = open(version_py).read().strip().split('=')[-1].replace('"', '').strip()
 print(version)
 
 
@@ -47,17 +47,17 @@ setup(name='pauvre',
       author='Darrin Schultz',
       author_email='dts@ucsc.edu',
       classifiers=[
-            'Development Status :: 2 - Pre-Alpha',
-            'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-            'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.5',
-            'Operating System :: POSIX :: Linux',
-            'Topic :: Scientific/Engineering :: Bio-Informatics',
-            'Intended Audience :: Science/Research'
-          ],
+          'Development Status :: 2 - Pre-Alpha',
+          'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.5',
+          'Operating System :: POSIX :: Linux',
+          'Topic :: Scientific/Engineering :: Bio-Informatics',
+          'Intended Audience :: Science/Research'
+      ],
       license='GPLv3',
       provides=['pauvre'],
-      packages=find_packages(),
+      packages=find_packages() + ['scripts'],
       install_requires=[
           "matplotlib >= 2.0.2",
           "biopython >= 1.68",
@@ -65,7 +65,7 @@ setup(name='pauvre',
           "numpy >= 1.12.1"
       ],
       entry_points={
-            'console_scripts': ['pauvre=pauvre.pauvre_main:main'],
-        },
+          'console_scripts': ['pauvre=pauvre.pauvre_main:main'],
+      },
       zip_safe=False,
       include_package_data=True)
