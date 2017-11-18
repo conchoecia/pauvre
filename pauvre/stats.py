@@ -212,13 +212,10 @@ def stats(df, fastqName, histogram):
     # now make a histogram with read lengths
     if histogram:
         # histo_values is (length, num reads of that length)
-        histoValues = []
-        for i in range(0, max(df["length"]) + 1, 1):
-            counts = df["length"].item().count(i)
-            histoValues.append((i, counts))
-        df = pd.DataFrame(histoValues)
-        df.columns = ['readLen', 'readCount']
-        df.to_csv("{}.hist.csv".format(fastqBase.split('.')[0]), index=False)
+        counts = df["length"].value_counts().to_frame(name="readCount")
+        counts.index.rename('readLen', inplace=True)
+        counts.sort_index(inplace=True)
+        counts.to_csv("{}.hist.csv".format(fastqBase.split('.')[0]), index=True)
 
     print(print_string)
 
