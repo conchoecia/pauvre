@@ -166,11 +166,8 @@ def lengthQual_table(df):
     minlen = min(df["length"])
     current_val = 0
     firstDone = False
-    for i in range(0, len(size_map)):
-        this_max_size = size_map[i][0]
-        # tss = this step size
-        tss = size_map[i][1]
-        for this_bin in range(current_val, this_max_size, tss):
+    for this_max_size, this_size_step in (size_map):
+        for this_bin in range(current_val, this_max_size, this_size_step):
             if minlen < this_bin:
                 if not firstDone:
                     lengthBinList.append(prev)
