@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pauvre.  If not, see <http://www.gnu.org/licenses/>.
 
-#TODO: make a function to nicely print out the pandas dataframes
+# TODO: make a function to nicely print out the pandas dataframes
 
 """
 Program: pauvre stats
@@ -60,6 +60,7 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import minimize
 from scipy.misc import factorial
+
 
 def stats(df, fastqName, histogram):
     """
@@ -121,18 +122,19 @@ def stats(df, fastqName, histogram):
     for this_size in analysis_sizes:
         these_lengths = df.loc[df["length"] >= this_size, "length"]
         if len(these_lengths) > 0:
-            print_string += "# Fastq stats for {}, reads >= {}bp\n".format(fastqBase,this_size)
+            print_string += "# Fastq stats for {}, reads >= {}bp\n".format(fastqBase, this_size)
             print_string += "numReads: {}\n".format(len(these_lengths))
-            print_string += "%totalNumReads: {0:.2f}\n".format((len(these_lengths)/len(df))*100)
+            print_string += "%totalNumReads: {0:.2f}\n".format((len(these_lengths) / len(df)) * 100)
             print_string += "numBasepairs: {}\n".format(sum(these_lengths))
-            print_string += "%totalBasepairs: {0:.2f}\n".format((sum(these_lengths)/sum(df["length"]))*100)
+            print_string += "%totalBasepairs: {0:.2f}\n".format(
+                (sum(these_lengths) / sum(df["length"])) * 100)
             print_string += "meanLen: {}\n".format(np.mean(these_lengths))
             print_string += "medianLen: {}\n".format(np.median(these_lengths))
             print_string += "minLen: {}\n".format(min(these_lengths))
             maxLen = max(these_lengths)
             print_string += "maxLen: {}\n".format(maxLen)
 
-            #calculate the N50
+            # calculate the N50
             fiftypercent = 0.5 * sum(these_lengths)
             N50          = 0
             L50          = 0
@@ -147,7 +149,7 @@ def stats(df, fastqName, histogram):
                     break
             print_string += "\n"
 
-    #This block calculates the number of length bins for this data set
+    # This block calculates the number of length bins for this data set
     lengthBinList = []
     # size_map = [(max size, step range)]
     size_map = [(1000, 250),
@@ -157,7 +159,7 @@ def stats(df, fastqName, histogram):
                 (500000, 20000),
                 (1000000, 50000),
                 (10000000000, 100000)]
-    #first, figure out where we will start the table
+    # first, figure out where we will start the table
     minlen = min(df["length"])
     current_val = 0
     firstDone = False
@@ -168,25 +170,25 @@ def stats(df, fastqName, histogram):
         for this_bin in range(current_val, this_max_size, tss):
             if minlen < this_bin:
                 if not firstDone:
-                   lengthBinList.append(prev)
-                   firstDone = True
+                    lengthBinList.append(prev)
+                    firstDone = True
                 lengthBinList.append(this_bin)
             prev = this_bin
         current_val = this_max_size
     # now figure out the largest bin
-    first_index_gt_maxLen = next(i for i,v in enumerate(lengthBinList) if v > maxLen) + 1
+    first_index_gt_maxLen = next(i for i, v in enumerate(lengthBinList) if v > maxLen) + 1
     lengthBinList = lengthBinList[0:first_index_gt_maxLen]
 
     qualBinList = []
     increment_by = 1
     while len(qualBinList) == 0 or len(qualBinList) > 15:
-        #now set up the bins for mean PHRED
+        # now set up the bins for mean PHRED
         minQual = int(np.floor(min(df["meanQual"])))
         maxQual = int(np.ceil(max(df["meanQual"])))
         qualBinList = list(np.arange(minQual, maxQual + increment_by, increment_by))
         increment_by += 0.25
 
-    #now make a table of read lengths
+    # now make a table of read lengths
     # row = j
     # column = i
     bpTots = []
@@ -196,7 +198,7 @@ def stats(df, fastqName, histogram):
         readNums = []
         for i in range(len(qualBinList)):
             thisQuery = df.query("length >= {} and meanQual >= {}".format(
-                              lengthBinList[j], qualBinList[i]))
+                lengthBinList[j], qualBinList[i]))
             dataNums.append(sum(thisQuery['length']))
             readNums.append(len(thisQuery.index))
         bpTots.append(dataNums)
@@ -205,7 +207,7 @@ def stats(df, fastqName, histogram):
     tables = {"Basepairs >= bin by mean PHRED and length": bpTots,
               "Number of reads >= bin by mean Phred+Len": readnumTots}
     for key in sorted(tables):
-        #make a dataframe of our basepair distribution table
+        # make a dataframe of our basepair distribution table
         dataDf = pd.DataFrame(tables[key], columns=["Q{}".format(x) for x in qualBinList])
         # add the min lengths as a column
         dataDf.insert(0, 'minLen', lengthBinList)
@@ -225,13 +227,14 @@ def stats(df, fastqName, histogram):
 
     print(print_string)
 
+
 def pretty_print_table(df, title):
     print_string = ""
     dataframeStr = df.to_string(index=False)
     # this is the char width of the whole table printed
     lendataframeStr = len(dataframeStr.split('\n')[0])
     # this is the char width of the minlen portion of the printed table
-    minLenLen =  len(dataframeStr.split()[0])
+    minLenLen = len(dataframeStr.split()[0])
     blank = " " * minLenLen
     # center the text on this offset as the table title
     txtoffset = lendataframeStr - minLenLen
@@ -239,6 +242,7 @@ def pretty_print_table(df, title):
         blank, title, offset=txtoffset)
     print_string += dataframeStr + "\n"
     return print_string
+
 
 def run(args):
     """This just opens the fastq file and passes the info to the stats() function.
