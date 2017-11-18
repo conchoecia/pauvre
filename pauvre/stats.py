@@ -153,7 +153,8 @@ def stats(df, fastqName, histogram=False):
 
 
 def lengthQual_table(df):
-        # This block calculates the number of length bins for this data set
+    """Create a table with lengths/basepairs on columns and qualities on rows"""
+    # This block calculates the number of length bins for this data set
     lengthBinList = []
     size_map = [(1000, 250),
                 (10000, 500),
@@ -166,7 +167,7 @@ def lengthQual_table(df):
     minlen = min(df["length"])
     current_val = 0
     firstDone = False
-    for this_max_size, this_size_step in (size_map):
+    for this_max_size, this_size_step in size_map:
         for this_bin in range(current_val, this_max_size, this_size_step):
             if minlen < this_bin:
                 if not firstDone:
@@ -216,6 +217,7 @@ def lengthQual_table(df):
 
 
 def histogram_lengths(length, name_prefix):
+    """Create a histogram of read counts per length."""
     counts = length.value_counts().to_frame(name="readCount")
     counts.index.rename('readLen', inplace=True)
     counts.sort_index(inplace=True)
