@@ -214,7 +214,7 @@ def stats(df, fastqName, histogram):
         # histo_values is (length, num reads of that length)
         histoValues = []
         for i in range(0, max(df["length"]) + 1, 1):
-            counts = np.array(df["length"]).count(i)
+            counts = df["length"].item().count(i)
             histoValues.append((i, counts))
         df = pd.DataFrame(histoValues)
         df.columns = ['readLen', 'readCount']
