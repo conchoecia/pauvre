@@ -34,10 +34,14 @@ import codecs
 
 import warnings
 
-def print_images(base_output_name, image_formats, dpi, transparent=False):
+
+def print_images(base_output_name, image_formats, dpi, path=None, transparent=False):
     file_base = opath.splitext(opath.basename(base_output_name))[0]
     for fmt in image_formats:
-        out_name = "{}.{}".format(file_base, fmt)
+        if path:
+            out_name = path
+        else:
+            out_name = "{}.{}".format(file_base, fmt)
         try:
             if fmt == 'png':
                 plt.savefig(out_name, dpi=dpi, transparent=transparent)
@@ -48,55 +52,59 @@ def print_images(base_output_name, image_formats, dpi, transparent=False):
             print("""You don't have permission to save pauvre plots to this
             directory. Try changing the directory and running the script again!""")
 
+
 class GFFParse():
-    def __init__(self, filename, stop_codons = None, species = None):
+    def __init__(self, filename, stop_codons=None, species=None):
         self.filename = filename
         self.samplename = os.path.splitext(os.path.basename(filename))[0]
         self.species = species
-        self.featureDict ={"name":[],
-                           "featType":[],
-                           "start":[],
-                           "stop":[],
-                           "strand":[]}
+        self.featureDict = {"name": [],
+                            "featType": [],
+                            "start": [],
+                            "stop": [],
+                            "strand": []}
         gffnames = ["sequence", "source", "featType", "start", "stop", "dunno1",
                     "strand", "dunno2", "tags"]
-        self.features = pd.read_csv(self.filename, comment = '#',
-                                    sep='\t', names = gffnames)
+        self.features = pd.read_csv(self.filename, comment='#',
+                                    sep='\t', names=gffnames)
         self.features['name'] = self.features['tags'].apply(self._get_name)
         self.features.drop('dunno1', 1, inplace=True)
         self.features.drop('dunno2', 1, inplace=True)
-        self.features.reset_index(inplace = True, drop = True)
+        self.features.reset_index(inplace=True, drop=True)
         # warn the user if there are CDS or gene entries not divisible by three
         self._check_triplets()
-        ##sort the database by start
+        # sort the database by start
         self.features.sort_values(by='start', ascending=True, inplace=True)
         if stop_codons:
             strip_codons = ['gene', 'CDS']
             # if the direction is forward, subtract three from the stop to bring it closer to the start
             self.features.loc[(self.features['featType'].isin(strip_codons)) & (self.features['strand'] == '+'), 'stop'] =\
-                self.features.loc[(self.features['featType'].isin(strip_codons)) & (self.features['strand'] == '+'), 'stop']  - 3
+                self.features.loc[(self.features['featType'].isin(strip_codons))
+                                  & (self.features['strand'] == '+'), 'stop'] - 3
             # if the direction is reverse, add three to the start (since the coords are flip-flopped)
             self.features.loc[(self.features['featType'].isin(strip_codons)) & (self.features['strand'] == '-'), 'start'] =\
-                self.features.loc[(self.features['featType'].isin(strip_codons)) & (self.features['strand'] == '-'), 'start']  + 3
-        self.features['center'] = self.features['start'] + ((self.features['stop'] - self.features['start'])/2)
+                self.features.loc[(self.features['featType'].isin(strip_codons))
+                                  & (self.features['strand'] == '-'), 'start'] + 3
+        self.features['center'] = self.features['start'] + \
+            ((self.features['stop'] - self.features['start']) / 2)
         # we need to add one since it doesn't account for the last base otherwise
-        self.features['width'] = abs(self.features['stop'] - self.features['start'] ) + 1
+        self.features['width'] = abs(self.features['stop'] - self.features['start']) + 1
         self.features['lmost'] = self.features.apply(self._determine_lmost, axis=1)
         self.features['rmost'] = self.features.apply(self._determine_rmost, axis=1)
         self.features['track'] = 0
-        if len(self.features.loc[self.features['tags'] == "Is_circular=true",'stop']) < 1:
+        if len(self.features.loc[self.features['tags'] == "Is_circular=true", 'stop']) < 1:
             raise IOError("""The GFF file needs to have a tag ending in "Is_circular=true"
             with a region from 1 to the number of bases in the mitogenome
 
             example:
             Bf201311	Geneious	region	1	13337	.	+	0	Is_circular=true
             """)
-        self.seqlen = int(self.features.loc[self.features['tags'] == "Is_circular=true",'stop'])
+        self.seqlen = int(self.features.loc[self.features['tags'] == "Is_circular=true", 'stop'])
         self.features.reset_index(inplace=True, drop=True)
         #print("float", self.features.loc[self.features['name'] == 'COX1', 'center'])
         #print("float cat", len(self.features.loc[self.features['name'] == 'CAT', 'center']))
-        #print(self.features)
-        #print(self.seqlen)
+        # print(self.features)
+        # print(self.seqlen)
 
     def set_features(self, new_features):
         """all this does is reset the features pandas dataframe"""
@@ -104,7 +112,8 @@ class GFFParse():
 
     def get_unique_genes(self):
         """This returns a series of gene names"""
-        plottable = self.features.query("featType != 'tRNA' and featType != 'region' and featType != 'source'")
+        plottable = self.features.query(
+            "featType != 'tRNA' and featType != 'region' and featType != 'source'")
         return set(plottable['name'].unique())
 
     def shuffle(self):
@@ -116,14 +125,15 @@ class GFFParse():
          shifting gff coordinates.
         """
         shuffles = []
-        #get the index of the first element
-        #get the index of the next thing
-        #subtract the indices of everything, then reset the ones that are below
+        # get the index of the first element
+        # get the index of the next thing
+        # subtract the indices of everything, then reset the ones that are below
         # zero
         done = False
-        shuffle_features = self.features[self.features['featType'].isin(['gene', 'rRNA', 'CDS', 'tRNA'])].copy(deep=True)
+        shuffle_features = self.features[self.features['featType'].isin(
+            ['gene', 'rRNA', 'CDS', 'tRNA'])].copy(deep=True)
         # we first add the shuffle features without reorganizing
-        #print("shuffle\n",shuffle_features)
+        # print("shuffle\n",shuffle_features)
         add_first = copy.deepcopy(self)
         add_first.set_features(shuffle_features)
         shuffles.append(add_first)
@@ -138,12 +148,15 @@ class GFFParse():
             first_stop = int(shuffle_features.loc[shuffle_features['name'] == first_gene, 'stop'])
             next_gene = ""
             for next_index in range(1, len(shuffle_features)):
-                #get the df of the next list, if len == 0, then it is a tRNA and we need to go to the next index
-                next_gene_df = list(shuffle_features[shuffle_features['featType'].isin(['gene', 'rRNA', 'CDS'])]['name'])
+                # get the df of the next list, if len == 0, then it is a tRNA and we need to go to the next index
+                next_gene_df = list(
+                    shuffle_features[shuffle_features['featType'].isin(['gene', 'rRNA', 'CDS'])]['name'])
                 if len(next_gene_df) != 0:
                     next_gene = next_gene_df[next_index]
-                    next_start = int(shuffle_features.loc[shuffle_features['name'] == next_gene, 'start']) 
-                    print("looking at {}, prev_stop is {}, start is {}".format(next_gene, first_stop, next_start))
+                    next_start = int(
+                        shuffle_features.loc[shuffle_features['name'] == next_gene, 'start'])
+                    print("looking at {}, prev_stop is {}, start is {}".format(
+                        next_gene, first_stop, next_start))
                     #print(shuffle_features[shuffle_features['featType'].isin(['gene', 'rRNA', 'CDS'])])
                     # if the gene we're looking at and the next one don't overlap, move on
                     if first_stop < next_start:
@@ -152,7 +165,7 @@ class GFFParse():
             if next_gene == absolute_first:
                 done = True
                 break
-            #now we can reset the first gene for the next iteration
+            # now we can reset the first gene for the next iteration
             first_gene = next_gene
             shuffle_features = shuffle_features.copy(deep=True)
             # figure out where the next start point is going to be
@@ -162,20 +175,23 @@ class GFFParse():
             shuffle_features['stop'] = shuffle_features['stop'] - next_start + 1
             shuffle_features['center'] = shuffle_features['center'] - next_start + 1
             # now correct the values that are less than 0
-            shuffle_features.loc[shuffle_features['start'] <1, 'start'] = shuffle_features.loc[shuffle_features['start'] <1, 'start'] + self.seqlen
-            shuffle_features.loc[shuffle_features['stop'] <1, 'stop'] = shuffle_features.loc[shuffle_features['stop'] <1, 'start'] + shuffle_features.loc[shuffle_features['stop'] <1, 'width']
-            shuffle_features['center'] = shuffle_features['start'] + ((shuffle_features['stop'] - shuffle_features['start'])/2)
+            shuffle_features.loc[shuffle_features['start'] < 1,
+                                 'start'] = shuffle_features.loc[shuffle_features['start'] < 1, 'start'] + self.seqlen
+            shuffle_features.loc[shuffle_features['stop'] < 1, 'stop'] = shuffle_features.loc[shuffle_features['stop']
+                                                                                              < 1, 'start'] + shuffle_features.loc[shuffle_features['stop'] < 1, 'width']
+            shuffle_features['center'] = shuffle_features['start'] + \
+                ((shuffle_features['stop'] - shuffle_features['start']) / 2)
             shuffle_features['lmost'] = shuffle_features.apply(self._determine_lmost, axis=1)
             shuffle_features['rmost'] = shuffle_features.apply(self._determine_rmost, axis=1)
             shuffle_features.sort_values(by='start', ascending=True, inplace=True)
-            shuffle_features.reset_index(inplace = True, drop=True)
+            shuffle_features.reset_index(inplace=True, drop=True)
             new_copy = copy.deepcopy(self)
             new_copy.set_features(shuffle_features)
             shuffles.append(new_copy)
         print("len shuffles: {}".format(len(shuffles)))
         return shuffles
 
-    def couple(self, other_GFF, this_y = 0, other_y = 1):
+    def couple(self, other_GFF, this_y=0, other_y=1):
         """
         Compares this set of features to another set and generates tuples of
         (x,y) coordinate pairs to input into lsi
@@ -185,8 +201,9 @@ class GFFParse():
         for thisname in self.features['name']:
             othermatch = other_features.loc[other_features['name'] == thisname, 'center']
             if len(othermatch) == 1:
-                this_x = float(self.features.loc[self.features['name'] == thisname, 'center'])#/self.seqlen
-                other_x = float(othermatch)#/other_GFF.seqlen
+                this_x = float(self.features.loc[self.features['name']
+                                                 == thisname, 'center'])  # /self.seqlen
+                other_x = float(othermatch)  # /other_GFF.seqlen
                 # lsi can't handle vertical or horizontal lines, and we don't
                 #  need them either for our comparison. Don't add if equivalent.
                 if this_x != other_x:
@@ -236,6 +253,7 @@ class GFFParse():
         else:
             return row['start']
 
+
 def parse_fastq_length_meanqual(fastq):
     """
     arguments:
@@ -252,25 +270,27 @@ def parse_fastq_length_meanqual(fastq):
         handle = gzip.open(fastq, "rt")
         length, meanQual = _fastq_parse_helper(handle)
     except:
-        handle = open(fastq,"r")
+        handle = open(fastq, "r")
         length, meanQual = _fastq_parse_helper(handle)
 
     handle.close()
     df = pd.DataFrame(list(zip(length, meanQual)), columns=['length', 'meanQual'])
     return df
 
-def filter_fastq_length_meanqual(df, min_len, max_len,\
+
+def filter_fastq_length_meanqual(df, min_len, max_len,
                                  min_mqual, max_mqual):
     querystring = "length >= {0} and meanQual >= {1}".format(min_len, min_mqual)
     if max_len != None:
         querystring += " and length <= {}".format(max_len)
     if max_mqual != None:
         querystring += " and meanQual <= {}".format(max_mqual)
-    print("Keeping reads that satisfy: {}".format(querystring), file = stderr)
+    print("Keeping reads that satisfy: {}".format(querystring), file=stderr)
     filtdf = df.query(querystring)
     #filtdf["length"] = pd.to_numeric(filtdf["length"], errors='coerce')
     #filtdf["meanQual"] = pd.to_numeric(filtdf["meanQual"], errors='coerce')
     return filtdf
+
 
 def _fastq_parse_helper(handle):
     length = []
@@ -284,8 +304,9 @@ def _fastq_parse_helper(handle):
 
 def _geometric_mean(phred_values):
     """in case I want geometric mean in the future, can calculate it like this"""
-    #np.mean(record.letter_annotations["phred_quality"]))
+    # np.mean(record.letter_annotations["phred_quality"]))
     pass
+
 
 def _arithmetic_mean(phred_values):
     """
@@ -296,6 +317,7 @@ def _arithmetic_mean(phred_values):
         phred_values = np.array(phred_values)
     return _erate_to_phred(np.mean(_phred_to_erate(phred_values)))
 
+
 def _phred_to_erate(phred_values):
     """
     converts a list or numpy array of phred values to a numpy array
@@ -303,7 +325,8 @@ def _phred_to_erate(phred_values):
     """
     if not isinstance(phred_values, np.ndarray):
         phred_values = np.array(phred_values)
-    return np.power(10, (-1 * (phred_values/10)) )
+    return np.power(10, (-1 * (phred_values / 10)))
+
 
 def _erate_to_phred(erate_values):
     """
