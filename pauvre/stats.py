@@ -208,15 +208,16 @@ def stats(df, fastqName, histogram=False):
         dataDf.insert(0, 'minLen', lengthBinList)
         print_string += pretty_print_table(dataDf, key)
 
-    # now make a histogram with read lengths
-    if histogram:
-        # histo_values is (length, num reads of that length)
-        counts = df["length"].value_counts().to_frame(name="readCount")
-        counts.index.rename('readLen', inplace=True)
-        counts.sort_index(inplace=True)
-        counts.to_csv("{}.hist.csv".format(fastqBase.split('.')[0]), index=True)
-
+    if histogram:  # now make a histogram with read lengths
+        histogram_lengths(df["length"], fastqBase.split('.')[0])
     print(print_string)
+
+
+def histogram_lengths(length, name_prefix):
+    counts = length.value_counts().to_frame(name="readCount")
+    counts.index.rename('readLen', inplace=True)
+    counts.sort_index(inplace=True)
+    counts.to_csv("{}.hist.csv".format(name_prefix), index=True)
 
 
 def pretty_print_table(df, title):
