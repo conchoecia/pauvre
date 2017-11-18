@@ -58,8 +58,6 @@ from pauvre.functions import parse_fastq_length_meanqual
 import os
 import pandas as pd
 import numpy as np
-from scipy.optimize import minimize
-from scipy.misc import factorial
 
 
 def stats(df, fastqName, histogram):
