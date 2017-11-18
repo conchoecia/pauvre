@@ -60,7 +60,7 @@ import pandas as pd
 import numpy as np
 
 
-def stats(df, fastqName, histogram):
+def stats(df, fastqName, histogram=False):
     """
     arguments:
      <df>
@@ -241,4 +241,4 @@ def run(args):
     This is a wrapper function that is accessed by pauvre_main.
     Useful since we can call stats() independently from other pauvre programs."""
     df = parse_fastq_length_meanqual(args.fastq)
-    stats(df, args.fastq, args.histogram)
+    stats(df, args.fastq, histogram=args.histogram)
