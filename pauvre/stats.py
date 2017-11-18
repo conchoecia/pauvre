@@ -245,4 +245,4 @@ def run(args):
     This is a wrapper function that is accessed by pauvre_main.
     Useful since we can call stats() independently from other pauvre programs."""
     df = parse_fastq_length_meanqual(args.fastq)
-    stats(args.fastq, lengths, meanQuals, args.histogram)
+    stats(df, args.fastq, args.histogram)
