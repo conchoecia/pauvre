@@ -145,7 +145,15 @@ def stats(df, fastqName, histogram=False):
                     break
             print_string += "\n"
 
-    # This block calculates the number of length bins for this data set
+    print_string += lengthQual_table(df)
+
+    if histogram:  # now make a histogram with read lengths
+        histogram_lengths(df["length"], fastqBase.split('.')[0])
+    print(print_string)
+
+
+def lengthQual_table(df):
+        # This block calculates the number of length bins for this data set
     lengthBinList = []
     size_map = [(1000, 250),
                 (10000, 500),
@@ -171,6 +179,7 @@ def stats(df, fastqName, histogram=False):
             prev = this_bin
         current_val = this_max_size
     # now figure out the largest bin
+    maxLen = df["length"].max()
     first_index_gt_maxLen = next(i for i, v in enumerate(lengthBinList) if v > maxLen) + 1
     lengthBinList = lengthBinList[0:first_index_gt_maxLen]
 
@@ -206,11 +215,7 @@ def stats(df, fastqName, histogram=False):
         dataDf = pd.DataFrame(tables[key], columns=["Q{}".format(x) for x in qualBinList])
         # add the min lengths as a column
         dataDf.insert(0, 'minLen', lengthBinList)
-        print_string += pretty_print_table(dataDf, key)
-
-    if histogram:  # now make a histogram with read lengths
-        histogram_lengths(df["length"], fastqBase.split('.')[0])
-    print(print_string)
+        return pretty_print_table(dataDf, key)
 
 
 def histogram_lengths(length, name_prefix):
