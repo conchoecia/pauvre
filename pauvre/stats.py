@@ -147,7 +147,6 @@ def stats(df, fastqName, histogram=False):
 
     # This block calculates the number of length bins for this data set
     lengthBinList = []
-    # size_map = [(max size, step range)]
     size_map = [(1000, 250),
                 (10000, 500),
                 (40000, 1000),
