@@ -217,7 +217,6 @@ def stats(df, fastqName, histogram):
             counts = df["length"].count(i)
             histoValues.append((i, counts))
         df = pd.DataFrame(histoValues)
-        #df = df.transpose()
         df.columns = ['readLen', 'readCount']
         df.to_csv("{}.hist.csv".format(fastqBase.split('.')[0]), index=False)
 
