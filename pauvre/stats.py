@@ -207,12 +207,14 @@ def lengthQual_table(df):
 
     tables = {"Basepairs >= bin by mean PHRED and length": bpTots,
               "Number of reads >= bin by mean Phred+Len": readnumTots}
+    print_table = ""
     for key in sorted(tables):
         # make a dataframe of our basepair distribution table
         dataDf = pd.DataFrame(tables[key], columns=["Q{}".format(x) for x in qualBinList])
         # add the min lengths as a column
         dataDf.insert(0, 'minLen', lengthBinList)
-        return pretty_print_table(dataDf, key)
+        print_table += pretty_print_table(dataDf, key)
+    return print_table
 
 
 def histogram_lengths(length, name_prefix):
