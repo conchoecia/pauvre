@@ -134,10 +134,8 @@ def stats(df, fastqName, histogram):
 
             # calculate the N50
             fiftypercent = 0.5 * sum(these_lengths)
-            N50          = 0
-            L50          = 0
-            lenSum       = 0
-            count        = 0
+            lenSum = 0
+            count = 0
             for val in sorted(these_lengths, reverse=True):
                 lenSum += val
                 count += 1
