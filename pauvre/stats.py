@@ -190,16 +190,14 @@ def lengthQual_table(df):
         increment_by += 0.25
 
     # now make a table of read lengths
-    # row = j
-    # column = i
     bpTots = []
     readnumTots = []
-    for j in range(len(lengthBinList)):
+    for row in range(len(lengthBinList)):
         dataNums = []
         readNums = []
-        for i in range(len(qualBinList)):
+        for column in range(len(qualBinList)):
             thisQuery = df.query("length >= {} and meanQual >= {}".format(
-                lengthBinList[j], qualBinList[i]))
+                lengthBinList[row], qualBinList[column]))
             dataNums.append(sum(thisQuery['length']))
             readNums.append(len(thisQuery.index))
         bpTots.append(dataNums)
