@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 # pauvre - just a pore PhD student's plotting package
 # Copyright (c) 2016-2017 Darrin T. Schultz. All rights reserved.

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from matplotlib import rcParams
 
 def update_rcParams():
