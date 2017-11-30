@@ -1,3 +1,5 @@
+![travis-ci](https://travis-ci.org/conchoecia/pauvre.svg?branch=master)
+
 ## pauvre: a plotting package designed for nanopore and PacBio long reads
 
 This package currently hosts four scripts for plotting and/or printing stats.
