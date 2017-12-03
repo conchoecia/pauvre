@@ -1,4 +1,4 @@
-![travis-ci](https://travis-ci.org/conchoecia/pauvre.svg?branch=master)
+[![travis-ci](https://travis-ci.org/conchoecia/pauvre.svg?branch=master)](https://travis-ci.org/conchoecia/pauvre)
 
 ## pauvre: a plotting package designed for nanopore and PacBio long reads
 
@@ -24,14 +24,14 @@ This package currently hosts four scripts for plotting and/or printing stats.
     per circular genome and one directory of gene alignments.
 
 ## Updates:
-- 20171130 - v0.1.86 - some changes by @wdecoster to integrate `pauvre` into [nanoplot](https://github.com/wdecoster/NanoPlot), 
+- 20171130 - v0.1.86 - some changes by @wdecoster to integrate `pauvre` into [nanoplot](https://github.com/wdecoster/NanoPlot),
   as well as some formatting changes that *may* make `pauvre` work better with python2.7. Adding Travis-CI functionality.
 - 20171025 - v0.1.83 - added some changes to make marginplot interface
   with @wdecoster's [nanoPlot](https://github.com/wdecoster/NanoPlot)
   package, and made `pauvre stats` only output data tables for
   filtered reads. `pauvre stats` also now has the `--filt_maxlen`,
   `--filt_maxqual`, `--filt_minlen`, and `--filt_minqual` options.
-- 20171018 - v0.1.8 - you can now filter reads and adjust the plotting viewing window. 
+- 20171018 - v0.1.8 - you can now filter reads and adjust the plotting viewing window.
   [See below for a demonstration.](#filter-reads-and-adjust-viewing-window) I added the following options:
 
 ```
@@ -86,7 +86,7 @@ This package currently hosts four scripts for plotting and/or printing stats.
 ## `stats`
   - generate basic statistics about the fastq file. For example, if I
     want to know the number of bases and reads with AT LEAST a PHRED
-    score of 5 and AT LEAST a read length of 500, run the program as below 
+    score of 5 and AT LEAST a read length of 500, run the program as below
     and look at the cells highlighted with `<braces>`.
     - `pauvre stats --fastq miniDSMN15.fastq`
 
