@@ -1,4 +1,4 @@
-[]![travis-ci](https://travis-ci.org/conchoecia/pauvre.svg?branch=master)](https://travis-ci.org/conchoecia/pauvre)
+[![travis-ci](https://travis-ci.org/conchoecia/pauvre.svg?branch=master)](https://travis-ci.org/conchoecia/pauvre)
 
 ## pauvre: a plotting package designed for nanopore and PacBio long reads
 
