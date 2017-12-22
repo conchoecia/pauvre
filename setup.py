@@ -59,6 +59,7 @@ setup(name='pauvre',
       license='GPLv3',
       provides=['pauvre'],
       packages=find_packages() + ['scripts'],
+      python_requires='>=3',
       install_requires=[
           "matplotlib >= 2.0.2",
           "biopython >= 1.68",
