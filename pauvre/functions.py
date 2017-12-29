@@ -25,7 +25,7 @@ import numpy as np
 import os
 import pandas as pd
 from sys import stderr
-import os.path as opath
+import os.path
 import matplotlib.pyplot as plt
 import gzip
 
@@ -36,14 +36,13 @@ import codecs
 
 import warnings
 
-
 def print_images(base_output_name, image_formats, dpi, path=None, transparent=False):
-    file_base = opath.splitext(opath.basename(base_output_name))[0]
+    file_base = os.path.splitext(os.path.basename(base_output_name))[0]
     for fmt in image_formats:
         if path:
             out_name = path
         else:
-            out_name = "{}.{}".format(file_base, fmt)
+            out_name = "{0}_{1}.{2}".format(file_base, timestamp(), fmt)
         try:
             if fmt == 'png':
                 plt.savefig(out_name, dpi=dpi, transparent=transparent)
@@ -338,3 +337,9 @@ def _erate_to_phred(erate_values):
     if not isinstance(erate_values, np.ndarray):
         phred_values = np.array(erate_values)
     return -10 * np.log10(erate_values)
+
+def timestamp():
+    """
+    Returns the current time in :samp:`YYYY-MM-DD HH:MM:SS` format.
+    """
+    return time.strftime("%Y%m%d_%H%M%S")
