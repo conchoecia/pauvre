@@ -48,11 +48,11 @@ def generate_panel(panel_left, panel_bottom, panel_width, panel_height,
         for matplotlib anyway, but specifying them for readability. Here are
         options and defaults for the parameters used below:
 
-        axis : {‘x’, ‘y’, ‘both’}; which axis to modify; default = 'both'
-        which : {‘major’, ‘minor’, ‘both’}; which ticks to modify;
+        axis : {'x', 'y', 'both'}; which axis to modify; default = 'both'
+        which : {'major', 'minor', 'both'}; which ticks to modify;
                 default = 'major'
-        bottom, top, left, right : bool or {‘on’, ‘off’}; ticks on or off;
-        labelbottom, labeltop, labelleft, labelright : bool or {‘on’, ‘off’}
+        bottom, top, left, right : bool or {'on', 'off'}; ticks on or off;
+        labelbottom, labeltop, labelleft, labelright : bool or {'on', 'off'}
      """
 
     # create the panel
