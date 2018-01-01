@@ -299,12 +299,36 @@ def main():
                                            help="""make a synteny plot from a gff
                                         file, protein alignment, and partition
                                         file""")
+    parser_synplot.add_argument('--aln_dir',
+                                metavar='aln_dir',
+                                action=FullPaths,
+                                help="""The directory where all the fasta
+                                alignments are contained.""")
+    parser_synplot.add_argument('--center_on',
+                                type=str,
+                                default=None,
+                                help="""centers the plot around the gene that
+                                you pass as an argument""")
+    parser_synplot.add_argument('--dpi',
+                                metavar='dpi',
+                                default=600,
+                                type=int,
+                                help="""Change the dpi from the default 600
+                                if you need it higher""")
+    parser_synplot.add_argument('--fileform',
+                                dest='fileform',
+                                choices=['png', 'pdf', 'eps', 'jpeg', 'jpg',
+                                         'pdf', 'pgf', 'ps', 'raw', 'rgba',
+                                         'svg', 'svgz', 'tif', 'tiff'],
+                                default=['png'],
+                                nargs='+',
+                                help='Which output format would you like? Def.=png')
     parser_synplot.add_argument('--gff_paths',
                                 metavar='gff_paths',
                                 action=FullPathsList,
                                 nargs='+',
                                 help="""The input filepath for the gff annotation
-                                to plot""")
+                                to plot.""")
     parser_synplot.add_argument('--gff_labels',
                                 metavar='gff_labels',
                                 type=str,
@@ -312,12 +336,6 @@ def main():
                                 help="""In case the gff names and sequence names
                                 don't match, change the labels that will appear
                                 over the text.""")
-    parser_synplot.add_argument('--dpi',
-                                metavar='dpi',
-                                default=600,
-                                type=int,
-                                help="""Change the dpi from the default 600
-                                if you need it higher""")
     parser_synplot.add_argument('--optimum_order',
                                 action='store_true',
                                 help="""If selected, this doesn't plot the
@@ -326,54 +344,33 @@ def main():
                                 file as the top-most sequence in the plot, and
                                 reorganizes the remaining gff files to minimize
                                 the number of intersections.""")
-    parser_synplot.add_argument('--aln_dir',
-                                metavar='aln_dir',
-                                action=FullPaths,
-                                help="""The directory where all the fasta
-                                alignments are contained.""")
-    parser_synplot.add_argument('--stop_codons',
+    parser_synplot.add_argument('-o', '--output-basename',
+                                dest='BASENAME',
+                                help='Specify a base name for the output file('
+                                's). The input file base name is the '
+                                'default.')
+    parser_synplot.add_argument('-T', '--transparent',
+                                dest='TRANSPARENT',
+                                action='store_false',
+                                help="""Specify this option if you DON'T want a
+                                transparent background. Default is on.""")
+    parser_synplot.add_argument('--sandwich',
                                 action='store_true',
-                                default=True,
-                                help="""Performs some internal corrections if
-                                the gff annotation includes the stop
-                                codons in the coding sequences.""")
-    parser_synplot.add_argument('--center_on',
-                                type=str,
-                                default=None,
-                                help="""centers the plot around the gene that
-                                you pass as an argument""")
+                                default=False,
+                                help="""Put an additional copy of the first gff
+                                file on the bottom of the plot for comparison.""")
     parser_synplot.add_argument('--start_with_aligned_genes',
                                 action='store_true',
                                 default=False,
                                 help="""Minimizes the number of intersections
                                 but only selects combos where the first gene in
                                 each sequence is aligned.""")
-    parser_synplot.add_argument('--fileform',
-                                dest='fileform',
-                                metavar='STRING',
-                                choices=['png', 'pdf', 'eps', 'jpeg', 'jpg',
-                                         'pdf', 'pgf', 'ps', 'raw', 'rgba',
-                                         'svg', 'svgz', 'tif', 'tiff'],
-                                default=['png'],
-                                nargs='+',
-                                help='Which output format would you like? Def.=png')
-    parser_synplot.add_argument('-o', '--output-base-name',
-                                dest='BASENAME',
-                                help='Specify a base name for the output file('
-                                's). The input file base name is the '
-                                'default.')
-    parser_synplot.add_argument('-n', '--no-transparent',
-                                dest='TRANSPARENT',
-                                action='store_false',
-                                help="""Not the TV show. Specify this option if
-                               you don't want a transparent background. Default
-                               is on.""")
-    parser_synplot.add_argument('--sandwich',
+    parser_synplot.add_argument('--stop_codons',
                                 action='store_true',
-                                default=False,
-                                help="""Put an additional copy of the first gff
-                                file on the bottom of the plot for comparison.""")
-
+                                default=True,
+                                help="""Performs some internal corrections if
+                                the gff annotation includes the stop
+                                codons in the coding sequences.""")
     parser_synplot.set_defaults(func=run_subtool)
 
     #######################################################
@@ -391,7 +388,9 @@ def main():
     #  print the program's help.
     commandDict = {'redwood': parser_rwplot.print_help,
                    'marginplot': parser_mnplot.print_help,
-                   'stats': parser_stats.print_help}
+                   'stats': parser_stats.print_help,
+                   'synplot': parser_synplot.print_help}
+
 
     if len(sys.argv) == 2:
         commandDict[args.command]()

@@ -514,7 +514,12 @@ def synplot(args):
     else:
         file_base = args.BASENAME
     transparent = args.TRANSPARENT
-    print_images(file_base, args.fileform, args.dpi, transparent)
+    print_images(
+        base_output_name=file_base,
+        image_formats=args.fileform,
+        dpi=args.dpi,
+        transparent=transparent)
+
 
 
 def timestamp():
