@@ -154,7 +154,18 @@ def _plot_rff(panel, left_df, right_df, colorMap, y_pos, bar_thickness, text):
                             y_pos, bar_thickness, rotate = True)
     return panel, patch
 
-def gffplot_horizontal(figure, panel, args, gff_object, track_width, start_y):
+def x_offset_gff(GFFParseobj, x_offset):
+    """Takes in a gff object (a gff file parsed as a pandas dataframe),
+    and an x_offset value and shifts the start, stop, center, lmost, and rmost.
+
+    Returns a dataframe with the shifted values.
+    """
+    for columnname in ['start', 'stop', 'center', 'lmost', 'rmost']:
+        GFFParseobj.features[columnname] = GFFParseobj.features[columnname] + x_offset
+    return GFFParseobj
+
+def gffplot_horizontal(figure, panel, args, gff_object,
+                       track_width, start_y, **kwargs):
     # Because this size should be relative to the circle that it is plotted next
     #  to, define the start_radius as the place to work from, and the width of
     #  each track.
@@ -243,7 +254,8 @@ def gffplot_horizontal(figure, panel, args, gff_object, track_width, start_y):
             myPatches.append(patch)
     return panel, myPatches
 
-def gffplot_feature_hori(figure, panel, feature_df, colorMap, y_pos, bar_thickness, text=True):
+def gffplot_feature_hori(figure, panel, feature_df,
+                         colorMap, y_pos, bar_thickness, text=True):
     """This plots the track for a feature, and if there is something for
     'this_feature_overlaps_feature', then there is special processing to
     add the white bar and the extra slope for the chevron

@@ -21,13 +21,13 @@
 
 from Bio import SeqIO
 import copy
+import gzip
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 from sys import stderr
-import os.path
-import matplotlib.pyplot as plt
-import gzip
+import time
 
 
 # this makes opening files more robust for different platforms

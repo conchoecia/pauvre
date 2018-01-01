@@ -307,8 +307,11 @@ def main():
     parser_synplot.add_argument('--center_on',
                                 type=str,
                                 default=None,
-                                help="""centers the plot around the gene that
-                                you pass as an argument""")
+                                help="""Centers the plot around the gene that
+                                you pass as an argument. For example, if there
+                                is a locus called 'COI' in the gff file and in
+                                the alignments directory, center using:
+                                --center_on COI""")
     parser_synplot.add_argument('--dpi',
                                 metavar='dpi',
                                 default=600,
@@ -327,8 +330,9 @@ def main():
                                 metavar='gff_paths',
                                 action=FullPathsList,
                                 nargs='+',
-                                help="""The input filepath for the gff annotation
-                                to plot.""")
+                                help="""The input filepath. for the gff annotation
+                                to plot. Individual filepaths separated by spaces.
+                                For example, --gff_paths sp1.gff sp2.gff sp3.gff""")
     parser_synplot.add_argument('--gff_labels',
                                 metavar='gff_labels',
                                 type=str,

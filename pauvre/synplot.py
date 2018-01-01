@@ -474,9 +474,11 @@ def synplot(args):
         x_offset = 0
         if args.center_on:
             x_offset = -1 * int(gff.features.loc[gff.features['name'] == args.center_on, 'center'])
-        panel0, patches = gfftools.gffplot_horizontal(figure, panel0, args, gff,
-                                                      0.2, len(optGFFs) - i - 1 - (0.18/2),
-                                                      x_offset = x_offset)
+            gff = gfftools.x_offset_gff(gff, x_offset)
+        panel0, patches = gfftools.gffplot_horizontal(
+            figure, panel0, args, gff,
+            0.2, len(optGFFs) - i - 1 - (0.18/2),
+            x_offset = x_offset)
         seq_name = gff.features['sequence'].unique()[0]
         if args.gff_labels:
             seq_name = "$\it{{{0}}}$".format(gff.species)
