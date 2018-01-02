@@ -636,7 +636,7 @@ def redwood(args):
     else:
         radius = start_radius_dict[30]
 
-    circle_fontsize = 10
+    circle_fontsize = 14
     panelCircle.text(0, 0, "Position\n(bp)", fontsize = circle_fontsize,
                      ha='center', va='center',
                      color = 'black', **hfont)
