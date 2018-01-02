@@ -183,51 +183,9 @@ def main():
     #############
     # redwood
     #############
-    parser_rwplot = subparsers.add_parser('redwood',
+    parser_redwood = subparsers.add_parser('redwood',
                                           help='make a redwood plot from a bam file')
-    parser_rwplot.add_argument('-M', '--main_bam',
-                               metavar='mainbam',
-                               action=FullPaths,
-                               help='The input filepath for the bam file to plot')
-    parser_rwplot.add_argument('-R', '--rnaseq_bam',
-                               metavar='rnabam',
-                               action=FullPaths,
-                               help='The input filepath for the rnaseq bam file to plot')
-    parser_rwplot.add_argument('--gff',
-                               metavar='gff',
-                               action=FullPaths,
-                               help="""The input filepath for the gff annotation
-                               to plot""")
-    parser_rwplot.add_argument('--fileform',
-                               dest='fileform',
-                               metavar='STRING',
-                               choices=['png', 'pdf', 'eps', 'jpeg', 'jpg',
-                                        'pdf', 'pgf', 'ps', 'raw', 'rgba',
-                                        'svg', 'svgz', 'tif', 'tiff'],
-                               default=['png'],
-                               nargs='+',
-                               help='Which output format would you like? Def.=png')
-    parser_rwplot.add_argument('--sort',
-                               dest='sort',
-                               choices=['ALNLEN', 'TRULEN', 'MAPLEN', 'POS'],
-                               default='ALNLEN',
-                               help="""What value to use to sort the order in
-                               which the reads are plotted?""")
-    parser_rwplot.add_argument('--small_start',
-                               dest='small_start',
-                               choices=['inside', 'outside'],
-                               default='inside',
-                               help="""This determines where the shortest of the
-                               filtered reads will appear on the redwood plot:
-                               on the outside or on the inside? The default
-                               option puts the longest reads on the outside and
-                               the shortest reads on the inside.""")
-    parser_rwplot.add_argument('--query',
-                               dest='query',
-                               default=['ALNLEN >= 10000', 'MAPLEN < reflength'],
-                               nargs='+',
-                               help='Query your reads to change plotting options')
-    parser_rwplot.add_argument('-d', '--doubled',
+    parser_redwood.add_argument('-d', '--doubled',
                                dest='doubled',
                                choices=['main', 'rnaseq'],
                                default=[],
@@ -237,27 +195,83 @@ def main():
                                plotting errors. Accepts multiple arguments.
                                'main' is for the sam file passed with --sam,
                                'rnaseq' is for the sam file passed with --rnaseq""")
-    parser_rwplot.add_argument('--dpi',
+    parser_redwood.add_argument('--dpi',
                                metavar='dpi',
                                default=600,
                                type=int,
                                help="""Change the dpi from the default 600
                                if you need it higher""")
-    parser_rwplot.add_argument('-I', '--interlace',
+    parser_redwood.add_argument('--fileform',
+                               dest='fileform',
+                               metavar='STRING',
+                               choices=['png', 'pdf', 'eps', 'jpeg', 'jpg',
+                                        'pdf', 'pgf', 'ps', 'raw', 'rgba',
+                                        'svg', 'svgz', 'tif', 'tiff'],
+                               default=['png'],
+                               nargs='+',
+                               help='Which output format would you like? Def.=png')
+    parser_redwood.add_argument('--gff',
+                               metavar='gff',
+                               action=FullPaths,
+                               help="""The input filepath for the gff annotation
+                               to plot""")
+    parser_redwood.add_argument('-I', '--interlace',
                                action='store_true',
                                default=False,
                                help="""Interlace the reads so the pileup plot
-                                       looks better""")
-    parser_rwplot.add_argument('-i', '--invert',
+                                       looks better. Doesn't work currently""")
+    parser_redwood.add_argument('-i', '--invert',
                                action='store_true',
                                default=False,
                                help="""invert the image so that it looks better
-                               on a dark backgroun. DOESN'T DO ANYTHING.""")
-    parser_rwplot.add_argument('-L', '--log',
+                               on a dark background. DOESN'T DO ANYTHING.""")
+    parser_redwood.add_argument('-L', '--log',
                                action='store_true',
                                default=False,
                                help="""Plot the RNAseq track with a log scale""")
-    parser_rwplot.set_defaults(func=run_subtool)
+    parser_redwood.add_argument('-M', '--main_bam',
+                               metavar='mainbam',
+                               action=FullPaths,
+                               help="""The input filepath for the bam file to
+                               plot. Ideally was plotted with a fasta file that
+                               is two copies of the mitochondrial genome
+                               concatenated. This should be long reads (ONT, PB)
+                               and will be displayed in the interior of the
+                               redwood plot.""")
+    parser_redwood.add_argument('--query',
+                               dest='query',
+                               default=['ALNLEN >= 10000', 'MAPLEN < reflength'],
+                               nargs='+',
+                               help='Query your reads to change plotting options')
+    parser_redwood.add_argument('-R', '--rnaseq_bam',
+                               metavar='rnabam',
+                               action=FullPaths,
+                               help='The input filepath for the rnaseq bam file to plot')
+    parser_redwood.add_argument('--small_start',
+                               dest='small_start',
+                               choices=['inside', 'outside'],
+                               default='inside',
+                               help="""This determines where the shortest of the
+                               filtered reads will appear on the redwood plot:
+                               on the outside or on the inside? The default
+                               option puts the longest reads on the outside and
+                               the shortest reads on the inside.""")
+    parser_redwood.add_argument('--sort',
+                               dest='sort',
+                               choices=['ALNLEN', 'TRULEN', 'MAPLEN', 'POS'],
+                               default='ALNLEN',
+                               help="""What value to use to sort the order in
+                               which the reads are plotted?""")
+    parser_redwood.add_argument('--ticks',
+                               type = int,
+                               nargs = '+',
+                               default = [0, 10, 100, 1000],
+                               help="""Specify control for the number of ticks.""")
+    parser_redwood.add_argument('-T', '--transparent',
+                                action='store_false',
+                                help="""Specify this option if you DON'T want a
+                                transparent background. Default is on.""")
+    parser_redwood.set_defaults(func=run_subtool)
 
     #############
     # stats
@@ -353,11 +367,14 @@ def main():
                                 help='Specify a base name for the output file('
                                 's). The input file base name is the '
                                 'default.')
-    parser_synplot.add_argument('-T', '--transparent',
-                                dest='TRANSPARENT',
-                                action='store_false',
-                                help="""Specify this option if you DON'T want a
-                                transparent background. Default is on.""")
+    parser_synplot.add_argument('--ratio',
+                                nargs = '+',
+                                type = float,
+                                default=None,
+                                help="""Enter the dimensions (arbitrary units)
+                                to plot the figure. For example a figure that is
+                                seven times wider than tall is:
+                                --ratio 7 1""")
     parser_synplot.add_argument('--sandwich',
                                 action='store_true',
                                 default=False,
@@ -375,6 +392,11 @@ def main():
                                 help="""Performs some internal corrections if
                                 the gff annotation includes the stop
                                 codons in the coding sequences.""")
+    parser_synplot.add_argument('-T', '--transparent',
+                                dest='TRANSPARENT',
+                                action='store_false',
+                                help="""Specify this option if you DON'T want a
+                                transparent background. Default is on.""")
     parser_synplot.set_defaults(func=run_subtool)
 
     #######################################################
@@ -390,7 +412,7 @@ def main():
 
     # If there were no args, but someone selected a program,
     #  print the program's help.
-    commandDict = {'redwood': parser_rwplot.print_help,
+    commandDict = {'redwood': parser_redwood.print_help,
                    'marginplot': parser_mnplot.print_help,
                    'stats': parser_stats.print_help,
                    'synplot': parser_synplot.print_help}

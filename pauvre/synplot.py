@@ -19,7 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with pauvre.  If not, see <http://www.gnu.org/licenses/>.
 
+# TODO
 # import the pauvre rcParams
+# Cleanup everything
+
 import pandas as pd
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
@@ -400,13 +403,22 @@ def synplot(args):
     plt.style.use('BME163')
 
     # set the figure dimensions
-    figWidth = 2.5*4
-    figHeight = 5
+    if args.ratio:
+        figWidth = args.ratio[0] + 1
+        figHeight = args.ratio[1] + 1
+        #set the panel dimensions
+        panelWidth = args.ratio[0]
+        panelHeight =  args.ratio[1]
+
+    else:
+        figWidth = 2.5*4
+        figHeight = 5
+        #set the panel dimensions
+        panelWidth = 2.5 * 3
+        panelHeight = 2.5
+
     figure = plt.figure(figsize=(figWidth,figHeight))
 
-    #set the panel dimensions
-    panelWidth = 2.5 * 3
-    panelHeight = 2.5
 
     #find the margins to center the panel in figure
     leftMargin = (figWidth - panelWidth)/2
@@ -469,6 +481,11 @@ def synplot(args):
     #    panel0.plot(xxyy[0], xxyy[1])
     # now we plot horizontal lines showing the length of the mitochondrial sequence
     maxseqlen = 0
+    # this is a heuristic for trackwidth of what looks good in my experience
+    if args.ratio:
+        track_width = 0.062 * panelWidth
+    else:
+        track_width = 0.032 * panelWidth
     for i in range(len(optGFFs)):
         gff = optGFFs[i]
         x_offset = 0
@@ -477,7 +494,8 @@ def synplot(args):
             gff = gfftools.x_offset_gff(gff, x_offset)
         panel0, patches = gfftools.gffplot_horizontal(
             figure, panel0, args, gff,
-            0.2, len(optGFFs) - i - 1 - (0.18/2),
+            track_width = track_width,
+            start_y = len(optGFFs) - i - 1 - ((0.9 * track_width)/2),
             x_offset = x_offset)
         seq_name = gff.features['sequence'].unique()[0]
         if args.gff_labels:
@@ -503,7 +521,8 @@ def synplot(args):
     panel0.set_xlabel("position (bp)")
 
     #panel0.set_xlim([-15000, int(np.ceil(maxseqlen/1000)*1000)])
-    #panel0.set_ylim([-0.5, 2.5])
+    panel0.set_ylim([ 0 - ( (track_width/2) * 1.1 ),
+                      len(optGFFs) - 1 + ( (track_width/2) * 1.1 )])
 
     # This removes the text labels from the plot
     labels = [item.get_text() for item in panel0.get_xticklabels()]

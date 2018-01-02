@@ -24,12 +24,15 @@
 # i/ for loop took 269 seconds ~ 4.48 minutes
 
 #things to do
+
+# This doesn't make much sense. it is perfectly possible that it could
+#  double and logbe both (in reference to how histograms are plotted
+
 # - make each layer operate independently
 #   - for each of these, make the program figure out the total length either from the GFF or from the bam file
 # - make the error "Your query was too stringent and no reads resulted..." not give a traceback.
 # - raise the proper error if the sam file has no header.
 # - figure out how to update rcParams every time we run a program
-# - figure out if the poretools logger is actually doing anything
 # - Write a better docstring for how plotArc works.
 # - Write a docstring for seqOrder method. I don't remember what it does
 # - write a better function to get the alignment length of the sam/bam file
@@ -70,20 +73,16 @@ import pysam
 import scipy as sp
 import time
 import os, sys
+import warnings
 
 # import the pauvre rcParams
 import pauvre.rcparams as rc
-from pauvre.functions import GFFParse
-
+from pauvre.functions import GFFParse, print_images
 
 # following this tutorial to install helvetica
 # https://github.com/olgabot/sciencemeetproductivity.tumblr.com/blob/master/posts/2012/11/how-to-set-helvetica-as-the-default-sans-serif-font-in.md
 global hfont
 hfont = {'fontname':'Helvetica'}
-
-#logging
-import logging
-logger = logging.getLogger('pauvre')
 
 class BAMParse():
     """This class reads in a sam/bam file and constructs a pandas
@@ -274,8 +273,12 @@ def fix_query_reflength(sequence_length, queries, doubled):
 def cust_log(base, val):
     try:
         #val = np.log(val)/np.log(base)
-        val = np.log(val)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            val = np.log(val)
     except:
+        val = 0
+    if np.isinf(val):
         val = 0
     return val
 
@@ -298,8 +301,11 @@ def plot_histo(panel, args, angleMap, width_map, start_radius, track_radius,
         iStopIndex = i + 1
         iStartAngle = angleMap[iStartIndex]
         iStopAngle = angleMap[iStopIndex]
+        # This doesn't make much sense. it is perfectly possible that it could
+        #  double and logbe both
         if double:
             logwidth = -1 * track_radius * (np.log(width_map[i]-9)/np.log(max(width_map))) * 0.495
+
             log_start_radius = start_radius+((track_radius - (track_radius/100))/2)
             width = track_radius * (width_map[i]/max(width_map)) * 0.495
             normal_start_radius = start_radius+((track_radius - (track_radius/100))/2) + (track_radius/100)
@@ -314,9 +320,8 @@ def plot_histo(panel, args, angleMap, width_map, start_radius, track_radius,
                           width=width, fc='black')
         else:
             if thisLog:
-                base = 5
-                width = track_radius * (cust_log(base, width_map[i]-2)/cust_log(base, max(width_map)))
-                #alpha = cust_log(base, width_map[i])/cust_log(base, max(width_map))
+                base = 10
+                width = track_radius * (cust_log(base, width_map[i])/cust_log(base, max(width_map)))
 
             else:
                 width = track_radius * (width_map[i]/max(width_map))
@@ -328,16 +333,18 @@ def plot_histo(panel, args, angleMap, width_map, start_radius, track_radius,
     maxx = start_radius
     maxy = 0
     kerning = 12
-    if ticks:
+    if ticks != None and len(ticks) > 0:
         # plot the scalebar
         maxval=max(width_map)
         xs = []
         ys = []
         xend = start_radius
-        value_list = [10, 100, 1000]
+        value_list = ticks
         for value in value_list:
             centerAngle = 45
-            this_radius = start_radius + (track_radius * (np.log(value-9)/np.log(maxval)))
+            this_radius = start_radius + \
+                          (track_radius * (cust_log(10, value)/cust_log(10, maxval)))
+            print("this_radius", this_radius)
             arc, arcArray = plotArc(start_angle=centerAngle-1, stop_angle=centerAngle+1,
                               radius=this_radius,
                               width=track_radius/25, fc='red')
@@ -346,29 +353,21 @@ def plot_histo(panel, args, angleMap, width_map, start_radius, track_radius,
             myPatches.append(arc)
 
         middle = np.mean(ys) - (kerning/2)
-        new_ys = []
-        if len(value_list) % 2 == 0:
-            ystart = middle - (kerning/2) - ((len(new_ys) - 1) * kerning)
-            yend = middle + (kerning/2) + ((len(new_ys) - 1) * kerning)
-            for y in np.arange(ystart, yend+kerning, kerning):
-                new_ys.append(y)
-        else:
-            ystart = middle - kerning
-            yend = middle + kerning
-            for y in np.arange(ystart, yend + kerning, kerning):
-                new_ys.append(y)
-        print("xs", xs)
-        print("len xs", len(xs))
-        print("values", value_list)
-        print("new ys", new_ys)
+        # The tick marks should start slightly below the lowest tick
+        #  mark on the track itself and extend upward evenly with text.
+        new_ys = [middle-kerning + (kerning * i)
+                   for i in range(len(value_list))]
         for i in range(len(value_list)):
             xlist = [xs[i], xend]
             ylist = [ys[i], new_ys[i]]
+            # plots the lines between the markers and the labels
             panel.plot(xlist, ylist, ls='--', color='red', lw=0.75)
+            # plots the text labels
             panel.text(xend, new_ys[i],
                        value_list[i], fontsize = 12,
                        ha='left', va='center',
                        color = 'black', **hfont)
+            #plots the title
             panel.text(start_radius, new_ys[-1]+kerning,
                        "Read Depth ", fontsize = 10,
                        ha='center', va='center',
@@ -381,7 +380,11 @@ def plot_reads(args, angleMap, widthDict, samFiledf, start_radius,
                doubled = False, collapse = False, track_width=False,
                track_depth = False, thisLog = False):
     """this function plots the reads in a sam file.
-    Outputs the patches, and the final_radius"""
+    Outputs the patches, and the final_radius
+
+    Author:
+    Darrin T. Schultz (github@conchoecia)
+    """
 
     # there should be a different width dict with log scale
     #if args.log and thisLog:
@@ -394,6 +397,10 @@ def plot_reads(args, angleMap, widthDict, samFiledf, start_radius,
     #                 'P':0.1,  # padding (silent deletion from padded reference)
     #                 '=':0.1,  # sequence match
     #                 'X':0.1}  # sequence mismatch
+
+    # clean up the df to reset the number of rows, otherwise there might be
+    #  errors in the while loop below
+    samFiledf = samFiledf.reset_index()
 
     append_radius = 0
     myPatches = []
@@ -441,8 +448,8 @@ def plot_reads(args, angleMap, widthDict, samFiledf, start_radius,
         stop_angle = angleMap[stop_index]
         if args.log and thisLog:
             log = 100
-            read_width = track_width * ((cust_log(log, current_row + 1)/cust_log(100, track_depth + 1))\
-                                        - (cust_log(log, current_row)/cust_log(100, track_depth + 1)))
+            read_width = track_width * ((cust_log(log, current_row + 1)/cust_log(log, track_depth + 1))\
+                                        - (cust_log(log, current_row)/cust_log(log, track_depth + 1)))
             #print("log track depth: {}".format(np.log10(track_depth + 1)))
             #print("log current row: {}".format(np.log10(current_row + 1)))
         #now look in the plotted_depth_map to see if there is already a read
@@ -487,9 +494,9 @@ def plot_reads(args, angleMap, widthDict, samFiledf, start_radius,
             plotted = True
             #if we've ploted something, remove that read and reset the indices
             # since we will stay at the current index
-            samFiledf.drop(i, inplace=True)
-            samFiledf.reset_index(inplace=True)
-            samFiledf.drop('index', 1, inplace=True)
+            samFiledf = samFiledf.drop(i)
+            samFiledf = samFiledf.reset_index()
+            samFiledf = samFiledf.drop('index', 1)
             print("(countdown until done) rows: {0:0>{num}} dir: {1}\r".format(
                 len(samFiledf), direction, num= original_rownum_charcount), end="")
         else:
@@ -522,28 +529,34 @@ def plot_reads(args, angleMap, widthDict, samFiledf, start_radius,
     print("\nfinal row is {}".format(current_row))
     return myPatches, start_radius + append_radius
 
-
-
 def redwood(args):
+    """This function controls all the plotting features for the redwood plot.
+    1) determine the length of the circular fasta sequence length
+    """
+    # get the plotting options specific to this program.
     rc.update_rcParams()
+    # This stops numpy from printing numbers in scientific notation.
+    np.set_printoptions(suppress=True)
+
 
     start = time.time()
     print(args)
-    main_doubled = True if 'main' in args.doubled else False
 
+    #---------------------------------------------------------------
+    # 1) determine the length of the circular fasta sequence length
+    #_______________________________________________________________
+    main_doubled = True if 'main' in args.doubled else False
+    # It is fine that we are using a global since this will never be manipulated
     global sequence_length
     if args.main_bam:
         samFile = BAMParse(args.main_bam, main_doubled)
-        sequence_length = samFile.seqlength 
+        sequence_length = samFile.seqlength
         filename = samFile.filename
     else:
         sequence_length = GFFParse(args.gff).seqlen
-
     if sequence_length == 0:
         raise OSError("""You have used a SAM/BAM file with no header. Please add a header to
                  the file.""")
-    # This stops numpy from printing numbers in scientific notation.
-    np.set_printoptions(suppress=True)
 
     # this also needs to be changed depending on if it was a concatenated SAM
     # if doubled = true, then use linspace between 0,720
@@ -567,7 +580,7 @@ def redwood(args):
                  'P':0.1,  # padding (silent deletion from padded reference)
                  '=':0.1,  # sequence match
                  'X':0.1}  # sequence mismatch
- 
+
     ##################
     # make the redwood plot
     ##################
@@ -753,7 +766,6 @@ def redwood(args):
                      ha=ha, va=va, color = 'black', rotation=rotation, **hfont)
             # Now add a legend
 
-
     # If the user wants to plot long reads, plot them
     if args.main_bam:
         #turn the query string into something usable,
@@ -776,9 +788,11 @@ def redwood(args):
                 ascend = True
             elif args.small_start == 'outside':
                 ascend = False
-                samFile.sort_values(by=args.sort, ascending=True, inplace=True)
-                samFile = samFile.reset_index()
-                samFile.drop('index', 1, inplace=True)
+            samFile = samFile.sort_values(by=args.sort, ascending=ascend)
+            samFile = samFile.reset_index()
+            # It is necessary to drop the column called index, since reset_index()
+            #  adds this.
+            samFile = samFile.drop('index', 1)
 
         #this plots the central rings from the sam file
         read_patches, radius = plot_reads(args, angleMap, widthDict, samFile,
@@ -790,7 +804,6 @@ def redwood(args):
     #  plotted. Since the annotation should have a fixed proportional size to
     #  the circle independent of the number of plotted reads, define a new
     #  radius context.
-
     if args.gff:
         print("the radius at the end of annotation is: {}".format(radius))
         panelCircle, gff_patches, gff_radius = plot_gff(args, panelCircle, args.gff, radius)
@@ -812,10 +825,11 @@ def redwood(args):
         #                                  track_depth = max(bamobject.raw_depthmap),
         #                                  thisLog = True)
         radius_orig=radius
-
         read_patches, radius, panelCircle = plot_histo(panelCircle, args, angleMap,
                                                        bamobject.get_depthmap(), radius,
-                                                       track_width, thisLog = True, ticks = True)
+                                                       track_width,
+                                                       thisLog = True,
+                                                       ticks = args.ticks)
         myPatches = myPatches + read_patches
         myPatches.append(arc)
 
@@ -833,10 +847,12 @@ def redwood(args):
 
     end = time.time()
     print(end - start)
-    #plt.show()
-    for extension in args.fileform:
-        plt.savefig('redwood.{}'.format(extension), dpi=args.dpi,
-                    transparent=True, frameon=False)
+    # Print image(s)
+    print_images(
+        base_output_name="redwood",
+        image_formats=args.fileform,
+        dpi=args.dpi,
+        transparent=args.transparent)
 
 def feature_set_direction(feature_set_df):
     """This function determines if the features in the dataframe passed here are
@@ -962,7 +978,7 @@ def plot_gff(args, panelCircle, gff_path, radius):
     idone = False
     # we need to filter out the tRNAs since those are plotted last
     plottable_features = gffParser.features.query("featType != 'tRNA' and featType != 'region' and featType != 'source'")
-    plottable_features.reset_index(inplace=True, drop=True)
+    plottable_features = plottable_features.reset_index(drop=True)
     while idone == False:
         print("im in the overlap-pairing while loop i={}".format(i))
         # look ahead at all of the elements that overlap with the ith element

@@ -158,14 +158,14 @@ def x_offset_gff(GFFParseobj, x_offset):
     """Takes in a gff object (a gff file parsed as a pandas dataframe),
     and an x_offset value and shifts the start, stop, center, lmost, and rmost.
 
-    Returns a dataframe with the shifted values.
+    Returns a GFFParse object with the shifted values in GFFParse.features.
     """
     for columnname in ['start', 'stop', 'center', 'lmost', 'rmost']:
         GFFParseobj.features[columnname] = GFFParseobj.features[columnname] + x_offset
     return GFFParseobj
 
 def gffplot_horizontal(figure, panel, args, gff_object,
-                       track_width, start_y, **kwargs):
+                       track_width=0.2, start_y=0.1, **kwargs):
     # Because this size should be relative to the circle that it is plotted next
     #  to, define the start_radius as the place to work from, and the width of
     #  each track.
