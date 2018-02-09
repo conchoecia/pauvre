@@ -94,23 +94,25 @@ def main():
     #############
     parser_mnplot = subparsers.add_parser('marginplot',
                                           help='plot a marginal histogram of a fastq file')
+    parser_mnplot.add_argument('--dpi',
+                               metavar='dpi',
+                               default=600,
+                               type=int,
+                               help="""Change the dpi from the default 600
+                               if you need it higher""")
     parser_mnplot.add_argument('-f', '--fastq',
                                metavar='FASTQ',
                                action=FullPaths,
                                help='The input FASTQ file.')
-    parser_mnplot.add_argument('-n', '--no-transparent',
-                               dest='TRANSPARENT',
-                               action='store_false',
-                               help="""Not the TV show. Specify this option if
-                               you don't want a transparent background. Default
-                               is on.""")
-    parser_mnplot.add_argument('-t', '--title',
-                               metavar='TITLE',
-                               default='Read length vs mean quality',
-                               help="""This sets the title for the whole plot.
-                               Use --title "Crustacean's DNA read quality"
-                               if you need single quote or apostrophe
-                               inside title.""")
+    parser_mnplot.add_argument('--fileform',
+                               dest='fileform',
+                               metavar='STRING',
+                               choices=['png', 'pdf', 'eps', 'jpeg', 'jpg',
+                                        'pdf', 'pgf', 'ps', 'raw', 'rgba',
+                                        'svg', 'svgz', 'tif', 'tiff'],
+                               default=['png'],
+                               nargs='+',
+                               help='Which output format would you like? Def.=png')
     parser_mnplot.add_argument('--filt_maxlen',
                                type=int,
                                help="""This sets the max read length filter reads.""")
@@ -128,6 +130,33 @@ def main():
                                default=0,
                                help="""This sets the min mean read quality
                                to filter reads.""")
+    parser_mnplot.add_argument('--kmerdf',
+                               type = str,
+                               default = None,
+                               help = """Pass the filename of a data matrix if
+                               you would like to plot read length
+                               versus number of kmers in that read. The data matrix
+                               is a tab-separated text file with columns
+                               "id length numks and kmers", where:
+                               <id> = read id
+                               <length> = the length of the read
+                               <numks> = the number of canonical kmers in the read
+                               <kmers> = a list representation of kmers ie ['GAT', 'GTA']""")
+    parser_mnplot.add_argument('-n', '--no-transparent',
+                               dest='TRANSPARENT',
+                               action='store_false',
+                               help="""Not the TV show. Specify this option if
+                               you don't want a transparent background. Default
+                               is on.""")
+    parser_mnplot.add_argument('-o', '--output-base-name',
+                               dest='BASENAME',
+                               help='Specify a base name for the output file('
+                                    's). The input file base name is the '
+                                    'default.')
+    parser_mnplot.add_argument('--path',
+                               type=str,
+                               help="""Set an explicit filepath for the output.
+                               Only do this if you have selected one output type.""")
     parser_mnplot.add_argument('--plot_maxlen',
                                type=int,
                                help="""Sets the maximum viewing area in the
@@ -154,30 +183,17 @@ def main():
                                metavar='QUALBIN',
                                type=float,
                                help="""This sets the bin size to use for quality""")
+    parser_mnplot.add_argument('-t', '--title',
+                               metavar='TITLE',
+                               default='Read length vs mean quality',
+                               help="""This sets the title for the whole plot.
+                               Use --title "Crustacean's DNA read quality"
+                               if you need single quote or apostrophe
+                               inside title.""")
     parser_mnplot.add_argument('-y', '--add-yaxes',
                                dest='Y_AXES',
                                action='store_true',
                                help='Add Y-axes to both marginal histograms.')
-    parser_mnplot.add_argument('--fileform',
-                               dest='fileform',
-                               metavar='STRING',
-                               choices=['png', 'pdf', 'eps', 'jpeg', 'jpg',
-                                        'pdf', 'pgf', 'ps', 'raw', 'rgba',
-                                        'svg', 'svgz', 'tif', 'tiff'],
-                               default=['png'],
-                               nargs='+',
-                               help='Which output format would you like? Def.=png')
-    parser_mnplot.add_argument('-o', '--output-base-name',
-                               dest='BASENAME',
-                               help='Specify a base name for the output file('
-                                    's). The input file base name is the '
-                                    'default.')
-    parser_mnplot.add_argument('-d', '--dpi',
-                               metavar='dpi',
-                               default=600,
-                               type=int,
-                               help="""Change the dpi from the default 600
-                               if you need it higher""")
     parser_mnplot.set_defaults(func=run_subtool)
 
     #############

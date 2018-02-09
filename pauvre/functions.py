@@ -37,7 +37,8 @@ import codecs
 import warnings
 
 def print_images(base_output_name, image_formats, dpi, path=None, transparent=False):
-    file_base = os.path.splitext(os.path.basename(base_output_name))[0]
+    if base_output_name:
+        file_base = os.path.splitext(os.path.basename(base_output_name))[0]
     for fmt in image_formats:
         if path:
             out_name = path

@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pauvre.  If not, see <http://www.gnu.org/licenses/>.
 
+import ast
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -143,14 +144,23 @@ def generate_histogram(panel, data_list, max_plot_length, min_plot_length,
 
 
 def generate_heat_map(panel, data_frame, min_plot_length, min_plot_qual,
-                      max_plot_length, max_plot_qual, color):
-    hex_this = data_frame.query('length<{} and meanQual<{}'.format(
-        max_plot_length, max_plot_qual))
-
+                      max_plot_length, max_plot_qual, color, **kwargs):
     panel.set_xlim([min_plot_qual, max_plot_qual])
     panel.set_ylim([min_plot_length, max_plot_length])
-    # This single line controls plotting the hex bins in the panel
-    hex_vals = panel.hexbin(hex_this['meanQual'], hex_this['length'], gridsize=49,
+
+    if kwargs["kmerdf"]:
+        hex_this = data_frame.query('length<{} and numks<{}'.format(
+            max_plot_length, max_plot_qual))
+        # This single line controls plotting the hex bins in the panel
+        hex_vals = panel.hexbin(hex_this['numks'], hex_this['length'], gridsize=int(np.ceil(max_plot_qual/2)),
+                                linewidths=0.0, cmap=color)
+
+    else:
+        hex_this = data_frame.query('length<{} and meanQual<{}'.format(
+            max_plot_length, max_plot_qual))
+
+        # This single line controls plotting the hex bins in the panel
+        hex_vals = panel.hexbin(hex_this['meanQual'], hex_this['length'], gridsize=49,
                             linewidths=0.0, cmap=color)
     for each in panel.spines:
         panel.spines[each].set_visible(False)
@@ -322,6 +332,8 @@ def margin_plot(df, **kwargs):
     # Set max and min viewing window for quality
     if kwargs["plot_maxqual"]:
         max_plot_qual = kwargs["plot_maxqual"]
+    elif kwargs["kmerdf"]:
+        max_plot_qual = np.ceil(df["numks"].median() * 2)
     else:
         max_plot_qual = max(np.ceil(df['meanQual']))
     min_plot_qual = kwargs["plot_minqual"]
@@ -329,6 +341,8 @@ def margin_plot(df, **kwargs):
     # Set qual bin sizes
     if kwargs["qualbin"]:
         qual_bin_interval = kwargs["qualbin"]
+    elif kwargs["kmerdf"]:
+        qual_bin_interval = 1
     else:
         # again, this is just based on what looks good from experience
         qual_bin_interval = max_plot_qual / 85
@@ -340,13 +354,18 @@ def margin_plot(df, **kwargs):
                        y_label='Read Length', bottom_spine=length_bottom_spine)
 
     # Generate quality histogram
-    generate_histogram(qual_panel, df['meanQual'], max_plot_qual, min_plot_qual,
-                       qual_bin_interval, x_label='Phred Quality',
-                       y_label=qual_y_label, left_spine=qual_left_spine)
+    if kwargs["kmerdf"]:
+        generate_histogram(qual_panel, df['numks'], max_plot_qual, min_plot_qual,
+                           qual_bin_interval, x_label='number of kmers',
+                           y_label=qual_y_label, left_spine=qual_left_spine)
+    else:
+        generate_histogram(qual_panel, df['meanQual'], max_plot_qual, min_plot_qual,
+                           qual_bin_interval, x_label='Phred Quality',
+                           y_label=qual_y_label, left_spine=qual_left_spine)
 
     # Generate heat map
     counts = generate_heat_map(heat_map_panel, df, min_plot_length, min_plot_qual,
-                               max_plot_length, max_plot_qual, purple1)
+                               max_plot_length, max_plot_qual, purple1, kmerdf = kwargs["kmerdf"])
 
     # Generate legend
     generate_legend(legend_panel, counts, purple1)
@@ -359,7 +378,9 @@ def margin_plot(df, **kwargs):
             min_plot_qual, max_plot_qual, min_plot_length, max_plot_length),
             file=stderr)
     # Print image(s)
-    if kwargs["BASENAME"] is None:
+    if kwargs["BASENAME"] is None and not kwargs["path"] is None:
+        file_base = kwargs["BASENAME"]
+    elif kwargs["BASENAME"] is None:
         file_base = opath.splitext(opath.basename(kwargs["fastq"]))[0]
     else:
         file_base = kwargs["BASENAME"]
@@ -376,8 +397,12 @@ def margin_plot(df, **kwargs):
 
 
 def run(args):
-    df = parse_fastq_length_meanqual(args.fastq)
-    df = filter_fastq_length_meanqual(df, args.filt_minlen, args.filt_maxlen,
-                                      args.filt_minqual, args.filt_maxqual)
-    stats(df, args.fastq, False)
+    if args.kmerdf:
+        df = pd.read_csv(args.kmerdf, header='infer', sep='\t')
+        df["kmers"] = df["kmers"].apply(ast.literal_eval)
+    else:
+        df = parse_fastq_length_meanqual(args.fastq)
+        df = filter_fastq_length_meanqual(df, args.filt_minlen, args.filt_maxlen,
+                                          args.filt_minqual, args.filt_maxqual)
+        stats(df, args.fastq, False)
     margin_plot(df=df.dropna(), **vars(args))
