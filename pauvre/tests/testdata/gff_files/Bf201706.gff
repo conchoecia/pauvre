@@ -1,0 +1,18 @@
+##gff-version 3
+##source-version geneious 9.0.2
+Bf201706_circ	Geneious	region	1	13338	.	+	0	Is_circular=true
+Bf201706_circ	Geneious	rRNA	2256	3115	.	+	.	Name=16S
+Bf201706_circ	Geneious	rRNA	1880	2255	.	+	.	Name=12S
+Bf201706_circ	Geneious	gene	1	1524	.	+	.	Name=COX1
+Bf201706_circ	Geneious	gene	5981	7459	.	+	.	Name=ND5
+Bf201706_circ	Geneious	gene	4699	5781	.	+	.	Name=ND4
+Bf201706_circ	Geneious	gene	7608	8672	.	+	.	Name=ND2L
+Bf201706_circ	Geneious	gene	10863	11918	.	+	.	Name=CYTB
+Bf201706_circ	Geneious	gene	11837	12751	.	+	.	Name=ND1
+Bf201706_circ	Geneious	gene	3308	4051	.	+	.	Name=COX3
+Bf201706_circ	Geneious	gene	10016	10744	.	+	.	Name=ND2
+Bf201706_circ	Geneious	gene	9200	9868	.	+	.	Name=UNK
+Bf201706_circ	Geneious	gene	12757	13320	.	+	.	Name=COX2
+Bf201706_circ	Geneious	gene	4324	4698	.	+	.	Name=ND3
+Bf201706_circ	Geneious	gene	3099	3302	.	+	.	Name=ND6
+Bf201706_circ	Geneious	gene	5781	5969	.	+	.	Name=ND4L

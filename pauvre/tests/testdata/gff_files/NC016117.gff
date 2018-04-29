@@ -1,0 +1,17 @@
+##gff-version 3
+##source-version geneious 9.0.2
+NC_016117	Geneious	region	1	10326	.	+	0	Is_circular=true
+NC_016117	Geneious	source	1	10326	.	+	.	Name=source Mnemiopsis leidyi
+NC_016117	Geneious	rRNA	3521	4398	.	+	.	Name=16S rRNA
+NC_016117	Geneious	rRNA	3153	3520	.	+	.	Name=12S rRNA
+NC_016117	Geneious	CDS	1	1524	.	+	.	Name=COX1 CDS
+NC_016117	Geneious	CDS	6527	7933	.	+	.	Name=ND5 CDS
+NC_016117	Geneious	CDS	4399	5493	.	+	.	Name=ND4 CDS
+NC_016117	Geneious	CDS	8775	9860	.	+	.	Name=CYTB CDS
+NC_016117	Geneious	CDS	7933	8802	.	+	.	Name=ND1 CDS
+NC_016117	Geneious	CDS	1525	2250	.	+	.	Name=COX3 CDS
+NC_016117	Geneious	CDS	5495	6220	.	+	.	Name=ND2 CDS
+NC_016117	Geneious	CDS	2574	3152	.	+	.	Name=COX2 CDS
+NC_016117	Geneious	CDS	2247	2573	.	+	.	Name=ND3 CDS
+NC_016117	Geneious	CDS	9847	10050	.	+	.	Name=ND6 CDS
+NC_016117	Geneious	CDS	6221	6418	.	+	.	Name=ND4L CDS
