@@ -1,0 +1,24 @@
+Implementation of the Bentley-Ottmann algorithm for 2d line segment intersection.
+
+See:
+de Berg et al., Ch. 2
+http://en.wikipedia.org/wiki/Bentley-Ottmann_algorithm
+
+for more information.
+
+Usage:
+
+from lsi import intersection
+
+# S is a list of tuples of the form: ((x,y), (x,y))
+i = intersection(S)
+
+This function returns a dictionary of intersection points (keys) and a list of their associated segments (values).
+
+
+Currently, this implementation does not handle horizontal/vertical line segments. This will be changed shortly!
+
+A test file is available. It compares the running time of the algorithm to that of a brute-force O(N^2) comparison. It also generates a specified number of random input segments--you can set the precision and range by editing the file.
+
+Email at: splichte@princeton.edu
+

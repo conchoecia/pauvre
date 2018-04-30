@@ -341,6 +341,6 @@ def _erate_to_phred(erate_values):
 
 def timestamp():
     """
-    Returns the current time in :samp:`YYYY-MM-DD HH:MM:SS` format.
+    Returns the current time in :samp:`YYYYMMDD_HHMMSS` format.
     """
     return time.strftime("%Y%m%d_%H%M%S")

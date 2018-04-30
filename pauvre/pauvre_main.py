@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# pauvre - just a pore PhD student's plotting package
+# pauvre - just a pore plotting package
 # Copyright (c) 2016-2017 Darrin T. Schultz. All rights reserved.
 #
 # This file is part of pauvre.
@@ -19,15 +19,11 @@
 # You should have received a copy of the GNU General Public License
 # along with pauvre.  If not, see <http://www.gnu.org/licenses/>.
 
-# I took this code from https://github.com/arq5x/poretools/. Check it out. - DTS
+# I modeled this code on https://github.com/arq5x/poretools/. Check it out. - DTS
 
 import sys
 import os.path
 import argparse
-
-# logger
-import logging
-logger = logging.getLogger('poretools')
 
 # pauvre imports
 import pauvre.version
@@ -51,9 +47,10 @@ class FullPathsList(argparse.Action):
         setattr(namespace, self.dest,
                 [os.path.abspath(os.path.expanduser(value)) for value in values])
 
-
 def run_subtool(parser, args):
-    if args.command == 'marginplot':
+    if args.command == 'browser':
+        import pauvre.browser as submodule
+    elif args.command == 'marginplot':
         import pauvre.marginplot as submodule
     elif args.command == 'redwood':
         import pauvre.redwood as submodule
@@ -88,6 +85,86 @@ def main():
     #########################################
     # create the individual tool parsers
     #########################################
+
+    #############
+    # browser
+    #############
+    parser_browser = subparsers.add_parser('browser',
+                                          help="""an adaptable genome
+                                          browser with various track types""")
+    parser_browser.add_argument('-c', '--chromosomeid',
+                                metavar = "Chr",
+                                dest = 'CHR',
+                                type = str,
+                                help = """The fasta sequence to observe.
+                                Use the header name of the fasta file
+                                without the '>' character""")
+    parser_browser.add_argument('--dpi',
+                                metavar='dpi',
+                                default=600,
+                                type=int,
+                                help="""Change the dpi from the default 600
+                                if you need it higher""")
+    parser_browser.add_argument('--fileform',
+                                dest='fileform',
+                                metavar='STRING',
+                                choices=['png', 'pdf', 'eps', 'jpeg', 'jpg',
+                                         'pdf', 'pgf', 'ps', 'raw', 'rgba',
+                                         'svg', 'svgz', 'tif', 'tiff'],
+                                default=['png'],
+                                nargs='+',
+                                help='Which output format would you like? Def.=png')
+    parser_browser.add_argument('-o', '--output-base-name',
+                               dest='BASENAME',
+                               help="""Specify a base name for the output file(
+                                    s). The input file base name is the
+                                    default.""")
+    parser_browser.add_argument('-p', '--plot_commands',
+                                dest='CMD',
+                                nargs = '+',
+                                help="""Write strings here to select what
+                                to plot. The format for each track is:
+                                <type>:<path>:<style>:<options>
+
+                                To plot the reference, the format is:
+                                ref:<style>:<options>
+
+                                Surround each track string with double
+                                quotes and a space between subsequent strings.
+                                "bam:mybam.bam:depth" "ref:colorful"
+                                """)
+
+    parser_browser.add_argument('--ratio',
+                                nargs = '+',
+                                type = float,
+                                default=None,
+                                help="""Enter the dimensions (arbitrary units)
+                                to plot the figure. For example a figure that is
+                                seven times wider than tall is:
+                                --ratio 7 1""")
+    parser_browser.add_argument('-r', '--reference',
+                                metavar='REF',
+                                dest = 'REF',
+                                action=FullPaths,
+                                help='The reference fasta file.')
+    parser_browser.add_argument('--start',
+                                metavar='START',
+                                dest = 'START',
+                                type = int,
+                                help="""The start position to observe on the
+                                fasta file. Uses 1-based indexing.""")
+    parser_browser.add_argument('--stop',
+                                metavar='STOP',
+                                dest = 'STOP',
+                                type = int,
+                                help="""The stop position to observe on the
+                                fasta file. Uses 1-based indexing.""")
+    parser_browser.add_argument('-T', '--transparent',
+                                action='store_false',
+                                help="""Specify this option if you DON'T want a
+                                transparent background. Default is on.""")
+
+    parser_browser.set_defaults(func=run_subtool)
 
     #############
     # marginplot
@@ -145,7 +222,7 @@ def main():
     parser_mnplot.add_argument('-n', '--no-transparent',
                                dest='TRANSPARENT',
                                action='store_false',
-                               help="""Not the TV show. Specify this option if
+                               help="""Specify this option if
                                you don't want a transparent background. Default
                                is on.""")
     parser_mnplot.add_argument('-o', '--output-base-name',
@@ -428,7 +505,8 @@ def main():
 
     # If there were no args, but someone selected a program,
     #  print the program's help.
-    commandDict = {'redwood': parser_redwood.print_help,
+    commandDict = {'browser': parser_browser.print_help,
+                   'redwood': parser_redwood.print_help,
                    'marginplot': parser_mnplot.print_help,
                    'stats': parser_stats.print_help,
                    'synplot': parser_synplot.print_help}

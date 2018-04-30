@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# pauvre - just a pore PhD student's plotting package
-# Copyright (c) 2016-2017 Darrin T. Schultz. All rights reserved.
+# pauvre - just a pore plotting package
+# Copyright (c) 2016-2018 Darrin T. Schultz. All rights reserved.
 #
 # This file is part of pauvre.
 #
@@ -29,7 +29,7 @@ pd.set_option('display.width', 1000)
 import numpy as np
 import os
 import pauvre.rcparams as rc
-from pauvre.functions import GFFParse, print_images
+from pauvre.functions import GFFParse, print_images, timestamp
 from pauvre import gfftools
 from pauvre.lsi.lsi import intersection
 import progressbar
@@ -540,15 +540,6 @@ def synplot(args):
         image_formats=args.fileform,
         dpi=args.dpi,
         transparent=transparent)
-
-
-
-def timestamp():
-    """
-    Returns the current time in :samp:`YYYY-MM-DD HH:MM:SS` format.
-    """
-    return time.strftime("%Y%m%d_%H%M%S")
-
 
 def run(args):
     synplot(args)

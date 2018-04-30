@@ -41,7 +41,6 @@ class libSeq_test_case(unittest.TestCase):
             # now we change our working directory to the
             #  specific subdirectory for this file
 
-
         self.aln_dir = os.path.join(scriptdir, "testdata/alignments/")
         self.gff1 = os.path.join(scriptdir, "testdata/gff_files/Bf201706.gff")
         self.gff2 = os.path.join(scriptdir, "testdata/gff_files/JN392469.gff")

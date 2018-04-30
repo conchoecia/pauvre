@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # pauvre - a pore plotting package
-# Copyright (c) 2016-2017 Darrin T. Schultz. All rights reserved.
+# Copyright (c) 2016-2018 Darrin T. Schultz. All rights reserved.
 #
 # This file is part of pauvre.
 #
@@ -34,6 +34,147 @@ arrow_width = 80
 chevron_width = 40
 min_text = 550
 text_cutoff = 150
+
+global colorMap
+colorMap = {'gene': 'green', 'CDS': 'green', 'tRNA':'pink', 'rRNA':'red',
+                'misc_feature':'purple', 'rep_origin':'orange', 'spacebar':'white',
+                'ORF':'orange'}
+
+def _plot_left_to_right_introns(panel, geneid, db, y_pos, text = None):
+    """ plots a left to right patch with introns when there are no intervening
+    sequences to consider. Uses a gene id and gffutils database as input.
+                         b
+                 a    .-=^=-.    c
+      1__________2---/   e   `---1__________2
+      | #lff      \f            d| #lff      \
+      | left to    \3            | left to    \3
+      | right      /             | right      /
+      5___________/4             5___________/4
+    """
+    #first we need to determine the number of exons
+    bar_thickness = 0.75
+    #now we can start plotting the exons
+    exonlist = list(db.children(geneid, featuretype='CDS', order_by="start"))
+    for i in range(len(exonlist)):
+        cds_start = exonlist[i].start
+        cds_stop =  exonlist[i].stop
+        verts = [(cds_start, y_pos + bar_thickness), #1
+                 (cds_stop - chevron_width, y_pos + bar_thickness), #2
+                 (cds_stop, y_pos + (bar_thickness/2)), #3
+                 (cds_stop - chevron_width, y_pos), #4
+                 (cds_start, y_pos), #5
+                 (cds_start, y_pos + bar_thickness), #1
+        ]
+        codes = [Path.MOVETO,
+                 Path.LINETO,
+                 Path.LINETO,
+                 Path.LINETO,
+                 Path.LINETO,
+                 Path.CLOSEPOLY,
+        ]
+        path = Path(verts, codes)
+        patch = patches.PathPatch(path, lw = 0,
+                                  fc=colorMap['CDS'] )
+        panel.add_patch(patch)
+
+        # we must draw the splice junction
+        if i < len(exonlist) - 1:
+            next_start = exonlist[i+1].start
+            next_stop =  exonlist[i+1].stop
+            middle = cds_stop + ((next_start - cds_stop)/2)
+
+            verts = [(cds_stop - chevron_width, y_pos + bar_thickness), #2/a
+                     (middle, y_pos + 0.95), #b
+                     (next_start, y_pos + bar_thickness), #c
+                     (next_start, y_pos + bar_thickness - 0.05), #d
+                     (middle, y_pos + 0.95 - 0.05), #e
+                     (cds_stop - chevron_width, y_pos + bar_thickness -0.05), #f
+                     (cds_stop - chevron_width, y_pos + bar_thickness), #2/a
+                     ]
+            codes = [Path.MOVETO,
+                     Path.LINETO,
+                     Path.LINETO,
+                     Path.LINETO,
+                     Path.LINETO,
+                     Path.LINETO,
+                     Path.CLOSEPOLY,
+                     ]
+            path = Path(verts, codes)
+            patch = patches.PathPatch(path, lw = 0,
+                                      fc=colorMap['CDS'] )
+            panel.add_patch(patch)
+
+    return panel
+
+def _plot_left_to_right_introns_top(panel, geneid, db, y_pos, text = None):
+    """ slightly different from the above version such thatsplice junctions
+    are more visually explicit.
+
+    plots a left to right patch with introns when there are no intervening
+    sequences to consider. Uses a gene id and gffutils database as input.
+                            b
+                    a    .-=^=-.    c
+      1_____________2---/   e   `---1_____________2
+      | #lff       /f              d| #lff       /
+      | left to   /                 | left to   /
+      | right    /                  | right    /
+      4_________/3                  4_________/3
+    """
+    #first we need to determine the number of exons
+    bar_thickness = 0.75
+    #now we can start plotting the exons
+    exonlist = list(db.children(geneid, featuretype='CDS', order_by="start"))
+    for i in range(len(exonlist)):
+        cds_start = exonlist[i].start
+        cds_stop =  exonlist[i].stop
+        verts = [(cds_start, y_pos + bar_thickness), #1
+                 (cds_stop, y_pos + bar_thickness), #2
+                 (cds_stop - chevron_width, y_pos), #4
+                 (cds_start, y_pos), #5
+                 (cds_start, y_pos + bar_thickness), #1
+        ]
+        codes = [Path.MOVETO,
+                 Path.LINETO,
+                 Path.LINETO,
+                 Path.LINETO,
+                 Path.CLOSEPOLY,
+        ]
+        path = Path(verts, codes)
+        patch = patches.PathPatch(path, lw = 0,
+                                  fc=colorMap['CDS'] )
+        panel.add_patch(patch)
+
+        # we must draw the splice junction
+        if i < len(exonlist) - 1:
+            next_start = exonlist[i+1].start
+            next_stop =  exonlist[i+1].stop
+            middle = cds_stop + ((next_start - cds_stop)/2)
+
+            verts = [(cds_stop-5, y_pos + bar_thickness), #2/a
+                     (middle, y_pos + 0.95), #b
+                     (next_start, y_pos + bar_thickness), #c
+                     (next_start, y_pos + bar_thickness - 0.05), #d
+                     (middle, y_pos + 0.95 - 0.05), #e
+                     (cds_stop-5, y_pos + bar_thickness -0.05), #f
+                     (cds_stop-5, y_pos + bar_thickness), #2/a
+                     ]
+            codes = [Path.MOVETO,
+                     Path.LINETO,
+                     Path.LINETO,
+                     Path.LINETO,
+                     Path.LINETO,
+                     Path.LINETO,
+                     Path.CLOSEPOLY,
+                     ]
+            path = Path(verts, codes)
+            patch = patches.PathPatch(path, lw = 0,
+                                      fc=colorMap['CDS'] )
+            panel.add_patch(patch)
+
+    return panel
+
+
+
 
 def _plot_lff(panel, left_df, right_df, colorMap, y_pos, bar_thickness, text):
     """ plots a lff patch
