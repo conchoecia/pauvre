@@ -92,8 +92,8 @@ class PlotCommand:
                 self._len_error()
             self.cmdtype = chunks[0]
             self.path = os.path.abspath(os.path.expanduser(chunks[1]))
-            if len(chunks) > 3:
-                self.options = chunks[3].split(",")
+            if len(chunks) > 2:
+                self.options = chunks[2].split(",")
 
 
     def _len_error(self):
@@ -194,6 +194,9 @@ def plot_bam(panel, chrid, start, stop, thiscmd):
                 panel.add_patch(rect)
 
     if thiscmd.style == "reads":
+        #If we're plotting reads, we don't need y-axis
+        panel.tick_params(bottom="off", labelbottom="off",
+                          left ="off", labelleft = "off")
         reads = bam.features.copy()
         panel.set_xlim([start, stop])
         direction = "for"
@@ -274,16 +277,35 @@ def plot_gff3(panel, chrid, start, stop, thiscmd):
                              completely_within=False)
                      if thing.featuretype == "gene" ]
     panel.set_xlim([start, stop])
-    panel.set_ylim([0, len(genes_to_plot)])
+    # we don't need labels on one of the axes
+    #panel.tick_params(bottom="off", labelbottom="off",
+    #                  left ="off", labelleft = "off")
 
+
+    ticklabels = []
     for geneid in genes_to_plot:
-        if db[geneid].strand == "+":
-            panel = gfftools._plot_left_to_right_introns_top(panel, geneid, db,
-                                                         bottom, text = None)
-            bottom += 1
-        else:
-            raise IOError("""Plotting things on the reverse strand is
-            not yet implemented""")
+        plotnow = False
+        if "id" in thiscmd.options and geneid in thiscmd.options:
+            plotnow = True
+        elif "id" not in thiscmd.options:
+            plotnow = True
+        if plotnow:
+            ticklabels.append(geneid)
+            if db[geneid].strand == "+":
+                panel = gfftools._plot_left_to_right_introns_top(panel, geneid, db,
+                                                             bottom, text = None)
+                bottom += 1
+            else:
+                raise IOError("""Plotting things on the reverse strand is
+                not yet implemented""")
+    #print("tick labels are", ticklabels)
+    panel.set_ylim([0, len(ticklabels)])
+    yticks_vals = [val for val in np.linspace(0.5, len(ticklabels) - 0.5, len(ticklabels))]
+    panel.set_yticks(yticks_vals)
+    print("bottom is: ", bottom)
+    print("len tick labels is: ", len(ticklabels))
+    print("intervals are: ", yticks_vals)
+    panel.set_yticklabels(ticklabels)
 
     return panel
 
@@ -351,7 +373,7 @@ def browser(args):
         if thiscmd.cmdtype in ["gff3", "ref", "peptides"] \
            or thiscmd.style == "depth" \
            or "narrow" in thiscmd.options:
-            temp_panelHeight = 0.25
+            temp_panelHeight = 0.5
         else:
             temp_panelHeight = panelHeight
         panels.append( plt.axes([leftMargin/figWidth, #left
@@ -366,6 +388,7 @@ def browser(args):
                            top='off', labeltop='off')
         if thiscmd.cmdtype == "ref":
             panels[i].tick_params(bottom='on', labelbottom='on')
+
 
 
         #turn off some of the axes
