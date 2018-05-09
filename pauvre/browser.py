@@ -45,9 +45,8 @@ import Bio.SubsMat.MatrixInfo as MI
 global hfont
 hfont = {'fontname':'Helvetica'}
 
-if platform.system() == 'Linux':
-    matplotlib.use('agg')
-
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 import matplotlib.patches as patches
