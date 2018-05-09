@@ -408,11 +408,15 @@ def browser(args):
         file_base = 'browser_{}.png'.format(timestamp())
     else:
         file_base = args.BASENAME
+    path = None
+    if args.path:
+        path = args.path
     transparent = args.transparent
     print_images(
         base_output_name=file_base,
         image_formats=args.fileform,
         dpi=args.dpi,
+        path = path,
         transparent=transparent)
 
 

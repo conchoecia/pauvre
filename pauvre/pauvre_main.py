@@ -119,6 +119,10 @@ def main():
                                help="""Specify a base name for the output file(
                                     s). The input file base name is the
                                     default.""")
+    parser_browser.add_argument('--path',
+                               type=str,
+                               help="""Set an explicit filepath for the output.
+                               Only do this if you have selected one output type.""")
     parser_browser.add_argument('-p', '--plot_commands',
                                 dest='CMD',
                                 nargs = '+',
