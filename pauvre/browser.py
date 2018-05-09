@@ -19,6 +19,18 @@
 # You should have received a copy of the GNU General Public License
 # along with pauvre.  If not, see <http://www.gnu.org/licenses/>.
 
+# following this tutorial to install helvetica
+# https://github.com/olgabot/sciencemeetproductivity.tumblr.com/blob/master/posts/2012/11/how-to-set-helvetica-as-the-default-sans-serif-font-in.md
+global hfont
+hfont = {'fontname':'Helvetica'}
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap, Normalize
+import matplotlib.patches as patches
+
+
 import gffutils
 import pandas as pd
 pd.set_option('display.max_columns', 500)
@@ -35,21 +47,10 @@ import platform
 import sys
 import time
 
-
 # Biopython stuff
 from Bio import SeqIO
 import Bio.SubsMat.MatrixInfo as MI
 
-# following this tutorial to install helvetica
-# https://github.com/olgabot/sciencemeetproductivity.tumblr.com/blob/master/posts/2012/11/how-to-set-helvetica-as-the-default-sans-serif-font-in.md
-global hfont
-hfont = {'fontname':'Helvetica'}
-
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap, Normalize
-import matplotlib.patches as patches
 
 class PlotCommand:
     def __init__(self, plotcmd, REF):
