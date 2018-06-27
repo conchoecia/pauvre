@@ -79,6 +79,7 @@ class BAMParse():
         based on if there is actually a mapped base at any
         given position or not. better for long reads and RNA"""
         depthmap = [0] * (self.stop - self.start + 1)
+        print("depthmap is: {} long".format(len(depthmap)))
         for index, row in self.features.iterrows():
             thisindex = row["POS"] - self.start
             for thistup in row["TUPS"]:
@@ -86,12 +87,21 @@ class BAMParse():
                 b_len = thistup[0]
                 if b_type == "M":
                     for j in range(b_len):
+                        #this is necessary to reset the index if we wrap
+                        # around to the beginning
+                        if self.doubled and thisindex == len(depthmap):
+                            thisindex = 0
                         depthmap[thisindex] += 1
                         thisindex += 1
                 elif b_type in ["S", "H", "I"]:
                     pass
                 elif b_type in ["D", "N"]:
                     thisindex += b_len
+                    #this is necessary to reset the index if we wrap
+                    # around to the beginning
+                    if self.doubled and thisindex >= len(depthmap):
+                        thisindex = thisindex - len(depthmap)
+
         return depthmap
 
     def parse(self):
@@ -181,7 +191,7 @@ class BAMParse():
     def fix_pos(self, start_index):
         """
         arguments:
-         <TUPS> a list of tuples output from the cigar_parse() function.
+         an int
 
         purpose:
          When using a doubled SAMfile, any reads that start after the first copy

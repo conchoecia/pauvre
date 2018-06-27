@@ -404,7 +404,7 @@ def redwood(args):
     # It is fine that we are using a global since this will never be manipulated
     global sequence_length
     if args.main_bam:
-        samFile = BAMParse(args.main_bam, main_doubled)
+        samFile = BAMParse(args.main_bam, doubled = main_doubled)
         sequence_length = samFile.seqlength
         filename = samFile.filename
     else:
@@ -670,7 +670,7 @@ def redwood(args):
     if args.rnaseq_bam:
         print("in RNAseq")
         rna_doubled = True if 'rnaseq' in args.doubled else False
-        bamobject = BAMParse(args.rnaseq_bam, rna_doubled)
+        bamobject = BAMParse(args.rnaseq_bam, doubled = rna_doubled)
         samFile = bamobject.features
         track_width = radius * 0.15
         #read_patches, radius = plot_reads(args, angleMap,
