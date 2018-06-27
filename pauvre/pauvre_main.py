@@ -114,6 +114,10 @@ def main():
                                 default=['png'],
                                 nargs='+',
                                 help='Which output format would you like? Def.=png')
+    parser_browser.add_argument("--no_timestamp",
+                                  action = 'store_true',
+                                  help="""Turn off time stamps in the filename
+                                  output.""")
     parser_browser.add_argument('-o', '--output-base-name',
                                dest='BASENAME',
                                help="""Specify a base name for the output file(
@@ -137,7 +141,6 @@ def main():
                                 quotes and a space between subsequent strings.
                                 "bam:mybam.bam:depth" "ref:colorful"
                                 """)
-
     parser_browser.add_argument('--ratio',
                                 nargs = '+',
                                 type = float,
@@ -167,7 +170,6 @@ def main():
                                 action='store_false',
                                 help="""Specify this option if you DON'T want a
                                 transparent background. Default is on.""")
-
     parser_browser.set_defaults(func=run_subtool)
 
     #############
@@ -229,6 +231,10 @@ def main():
                                help="""Specify this option if
                                you don't want a transparent background. Default
                                is on.""")
+    parser_mnplot.add_argument("--no_timestamp",
+                                  action = 'store_true',
+                                  help="""Turn off time stamps in the filename
+                                  output.""")
     parser_mnplot.add_argument('-o', '--output-base-name',
                                dest='BASENAME',
                                help='Specify a base name for the output file('
@@ -335,6 +341,15 @@ def main():
                                concatenated. This should be long reads (ONT, PB)
                                and will be displayed in the interior of the
                                redwood plot.""")
+    parser_redwood.add_argument("--no_timestamp",
+                                  action = 'store_true',
+                                  help="""Turn off time stamps in the filename
+                                  output.""")
+    parser_redwood.add_argument('-o', '--output-base-name',
+                               dest='BASENAME',
+                               help='Specify a base name for the output file('
+                                    's). The input file base name is the '
+                                    'default.')
     parser_redwood.add_argument('--query',
                                dest='query',
                                default=['ALNLEN >= 10000', 'MAPLEN < reflength'],
@@ -451,6 +466,10 @@ def main():
                                 help="""In case the gff names and sequence names
                                 don't match, change the labels that will appear
                                 over the text.""")
+    parser_synplot.add_argument("--no_timestamp",
+                                  action = 'store_true',
+                                  help="""Turn off time stamps in the filename
+                                  output.""")
     parser_synplot.add_argument('--optimum_order',
                                 action='store_true',
                                 help="""If selected, this doesn't plot the

@@ -36,14 +36,18 @@ import codecs
 
 import warnings
 
-def print_images(base_output_name, image_formats, dpi, path=None, transparent=False):
+def print_images(base_output_name, image_formats, dpi,
+                 path=None, transparent=False, no_timestamp = False):
     if base_output_name:
         file_base = os.path.splitext(os.path.basename(base_output_name))[0]
     for fmt in image_formats:
         if path:
             out_name = path
         else:
-            out_name = "{0}_{1}.{2}".format(file_base, timestamp(), fmt)
+            if no_timestamp:
+                out_name = "{0}.{1}".format(file_base, fmt)
+            else:
+                out_name = "{0}_{1}.{2}".format(file_base, timestamp(), fmt)
         try:
             if fmt == 'png':
                 plt.savefig(out_name, dpi=dpi, transparent=transparent)

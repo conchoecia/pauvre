@@ -538,6 +538,7 @@ def synplot(args):
     print_images(
         base_output_name=file_base,
         image_formats=args.fileform,
+        no_timestamp = kwargs["no_timestamp"],
         dpi=args.dpi,
         transparent=transparent)
 

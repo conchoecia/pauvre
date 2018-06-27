@@ -703,9 +703,14 @@ def redwood(args):
     end = time.time()
     print(end - start)
     # Print image(s)
+    ifargs.BASENAME is None:
+        file_base = "redwood"
+    else:
+        file_base = args.BASENAME
     print_images(
-        base_output_name="redwood",
+        base_output_name=file_base,
         image_formats=args.fileform,
+        no_timestamp = args.no_timestamp,
         dpi=args.dpi,
         transparent=args.transparent)
 

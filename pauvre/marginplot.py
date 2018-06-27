@@ -392,9 +392,9 @@ def margin_plot(df, **kwargs):
         base_output_name=file_base,
         image_formats=kwargs["fileform"],
         dpi=kwargs["dpi"],
+        no_timestamp = kwargs["no_timestamp"],
         path=path,
         transparent=kwargs["TRANSPARENT"])
-
 
 def run(args):
     if args.kmerdf:

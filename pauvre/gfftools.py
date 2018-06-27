@@ -173,9 +173,6 @@ def _plot_left_to_right_introns_top(panel, geneid, db, y_pos, text = None):
 
     return panel
 
-
-
-
 def _plot_lff(panel, left_df, right_df, colorMap, y_pos, bar_thickness, text):
     """ plots a lff patch
       1__________2      ____________
