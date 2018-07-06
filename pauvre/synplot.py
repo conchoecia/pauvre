@@ -34,7 +34,9 @@ from pauvre import gfftools
 from pauvre.lsi.lsi import intersection
 import progressbar
 import platform
+import sys
 import time
+import warnings
 
 # for the shuffling algorithm
 from itertools import product
@@ -151,6 +153,7 @@ def shuffle_optimize_gffs(args, GFFs):
         bar = progressbar.ProgressBar()
         for combination in bar(list(product(*shuffles))):
             num_intersections = []
+            #I have no idea what this list comprehension does anymore.
             first_genes = [str(combination[i].features[combination[i].features['featType'].isin(['gene', 'rRNA', 'CDS', 'tRNA'])]['name'].head(n=1)).split()[1] for i in range(len(combination))]
             # skip to the next iteration if all the genes aren't the same
             if args.start_with_aligned_genes and len(set(first_genes)) != 1:
@@ -163,7 +166,7 @@ def shuffle_optimize_gffs(args, GFFs):
             if sum(num_intersections) < cumulative_least_shuffled_value:
                 shuffled_gffs = combination
                 cumulative_least_shuffled_value = sum(num_intersections)
-                print("\nnew least global intersections: {}".format(sum(num_intersections)))
+                print("\nnew fewest global intersections: {}".format(sum(num_intersections)))
     return shuffled_gffs
 
 def black_colormap():
@@ -205,7 +208,8 @@ def translate(value, left_min, left_max, right_min, right_max):
     return right_min + (value_scaled * right_span)
 
 def _samplename_warning(samplename, filename):
-    raise Warning("""There is a sample in your fasta alignments that
+    warnings.warn("""
+         There is a sample in your fasta alignments that
          does not match the samplenames from the gff filenames. Please
          rename this samplename to not contain any spaces or underscores.
          IE for sample 'NC016', '>NC_016_-_ND6' will not work but
@@ -221,6 +225,11 @@ def _samplelength_warning(samplename, genename, featType, gfflen, alnlen):
          stop codons are deleted/inserted from either the GFF or alignment. The
          protein alignment length should be 3 less than the gff length if the
          stop codons were included in the gff annotation.
+
+         Another possibility is that the RNA that is generating this error has
+         post-transcriptional modifications that complete the stop codon. In
+         this case, you can fudge the stop position in the gff file (increase
+         the value by one or two) to make the plotting script run.
 
          Sample name: {}
            feat type: {}
@@ -256,54 +265,61 @@ def get_alignments(args):
         thisFeatType = ""
         seqs_list    = {}
         indices_list = {}
+        print("We found the following samplenames: {}".format(args.samplenames),
+              file = sys.stderr)
+        # this block handles reading in the fasta files to interpret the alignments
         for record in SeqIO.parse(filelist[genename], "fasta"):
             # get the sample name and make sure that the sample names match
             samplename = record.id.replace("_", " ").split()[0]
+            print("Looking at sample: {}".format(samplename), file=sys.stderr)
             if samplename not in args.samplenames:
+                #if there's a sequence in the fasta that we did not specify
+                # in the command, ignore that sequence
                 _samplename_warning(samplename, filelist[genename])
-            # first, get the sample features
-            samplegff = args.samplenames[samplename].features
-            featType = samplegff.loc[samplegff['name'] == genename, 'featType'].to_string().split()[1]
-            # now we determine if this is a prot alignment or a nucleotide aln
-            if featType in ['gene', 'CDS']:
-                final_seq = "".join([x*3 for x in record.seq])
-            elif featType == 'rRNA':
-                final_seq = str(record.seq)
-            # we now need to verify that the protein sequence is
-            #  the length of the gene in the gff file. Do this by removing
-            #  gaps in the alignment
-            gfffilt = samplegff.loc[samplegff['name'] == genename, 'width']
-            if len(gfffilt) == 0:
-                _nosample_warning(samplename, genename, list(samplegff['name']))
-            gfflen = int(gfffilt)
-            aln = final_seq.replace("-", "")
-            alnlen = len(aln)
-            if gfflen != alnlen:
-                _samplelength_warning(samplename, genename, featType, gfflen, alnlen)
-            # If we've made it this far without any errors, then incorporate the
-            #  indices for each index
-            #print("start_index", start_index)
-            final_indices = [-1] * len(final_seq)
-            # up until the next for loop, here we are determining which
-            #  direction to move in. Reverse sequences decrease from the start
-            strand = samplegff.loc[samplegff['name'] == genename, 'strand'].to_string().split()[1]
-            if strand == '+':
-                direction = 1
-                start_index = int(samplegff.loc[samplegff['name'] == genename, 'start'])
-            elif strand == '-':
-                direction = -1
-                start_index = int(samplegff.loc[samplegff['name'] == genename, 'stop'])
-            for i in range(len(final_indices)):
-                if final_seq[i] != '-':
-                    final_indices[i] = start_index
-                    start_index = start_index + (1 * direction)
-            seqs_list[samplename] = final_seq
-            if args.center_on:
-                center_coord = int(args.samplenames[samplename].features.loc[args.samplenames[samplename].features['name'] == args.center_on, 'center'])
-                indices_list[samplename] = np.array(final_indices) - center_coord
             else:
-                indices_list[samplename] = final_indices
-            thisFeatType = featType
+                # first, get the sample features
+                samplegff = args.samplenames[samplename].features
+                featType = samplegff.loc[samplegff['name'] == genename, 'featType'].to_string().split()[1]
+                # now we determine if this is a prot alignment or a nucleotide aln
+                if featType in ['gene', 'CDS']:
+                    final_seq = "".join([x*3 for x in record.seq])
+                elif featType == 'rRNA':
+                    final_seq = str(record.seq)
+                # we now need to verify that the protein sequence is
+                #  the length of the gene in the gff file. Do this by removing
+                #  gaps in the alignment
+                gfffilt = samplegff.loc[samplegff['name'] == genename, 'width']
+                if len(gfffilt) == 0:
+                    _nosample_warning(samplename, genename, list(samplegff['name']))
+                gfflen = int(gfffilt)
+                aln = final_seq.replace("-", "")
+                alnlen = len(aln)
+                if gfflen != alnlen:
+                    _samplelength_warning(samplename, genename, featType, gfflen, alnlen)
+                # If we've made it this far without any errors, then incorporate the
+                #  indices for each index
+                #print("start_index", start_index)
+                final_indices = [-1] * len(final_seq)
+                # up until the next for loop, here we are determining which
+                #  direction to move in. Reverse sequences decrease from the start
+                strand = samplegff.loc[samplegff['name'] == genename, 'strand'].to_string().split()[1]
+                if strand == '+':
+                    direction = 1
+                    start_index = int(samplegff.loc[samplegff['name'] == genename, 'start'])
+                elif strand == '-':
+                    direction = -1
+                    start_index = int(samplegff.loc[samplegff['name'] == genename, 'stop'])
+                for i in range(len(final_indices)):
+                    if final_seq[i] != '-':
+                        final_indices[i] = start_index
+                        start_index = start_index + (1 * direction)
+                seqs_list[samplename] = final_seq
+                if args.center_on:
+                    center_coord = int(args.samplenames[samplename].features.loc[args.samplenames[samplename].features['name'] == args.center_on, 'center'])
+                    indices_list[samplename] = np.array(final_indices) - center_coord
+                else:
+                    indices_list[samplename] = final_indices
+                thisFeatType = featType
         seqs_dict[genename] = {"featType": thisFeatType,
                               "seqs": seqs_list,
                                "indices": indices_list}
@@ -485,18 +501,25 @@ def synplot(args):
     if args.ratio:
         track_width = 0.062 * panelWidth
     else:
-        track_width = 0.032 * panelWidth
+        #0.032 if only 3
+        #0.062 if 6
+        track_width = 0.062 * panelWidth
     for i in range(len(optGFFs)):
         gff = optGFFs[i]
+        print(" - Plotting panels of {}".format(gff), file = sys.stderr)
         x_offset = 0
+        print("   - Detecting if centering is on.".format(gff), file = sys.stderr)
         if args.center_on:
             x_offset = -1 * int(gff.features.loc[gff.features['name'] == args.center_on, 'center'])
             gff = gfftools.x_offset_gff(gff, x_offset)
+            print("     - Centering is on.".format(gff), file = sys.stderr)
+        print("   - Plotting horizontal portions with gffplot_horizontal.".format(gff), file = sys.stderr)
         panel0, patches = gfftools.gffplot_horizontal(
             figure, panel0, args, gff,
             track_width = track_width,
             start_y = len(optGFFs) - i - 1 - ((0.9 * track_width)/2),
             x_offset = x_offset)
+        print("{} patches came out of gffplot_horizontal()".format(len(patches)))
         seq_name = gff.features['sequence'].unique()[0]
         if args.gff_labels:
             seq_name = "$\it{{{0}}}$".format(gff.species)
@@ -512,10 +535,13 @@ def synplot(args):
         #ys = [len(optGFFs) - i - 1 + (0.09/2)]*2
         ys = [len(optGFFs) - i - 1]*2
 
+        print("   - Plotting lines.".format(gff), file = sys.stderr)
         panel0.plot(xs, ys, color='black', zorder = -9)
-        for patch in patches:
+        print("   - Adding patches.".format(gff), file = sys.stderr)
+        print("Right before adding patches there are {} patches.".format(len(patches)))
+        for i in range(len(patches)):
+            patch = patches[i]
             allPatches.append(patch)
-
     for patch in allPatches:
         panel0.add_patch(patch)
     panel0.set_xlabel("position (bp)")
@@ -527,6 +553,8 @@ def synplot(args):
     # This removes the text labels from the plot
     labels = [item.get_text() for item in panel0.get_xticklabels()]
     empty_string_labels = ['']*len(labels)
+    print(" - Setting tick labels.".format(gff), file = sys.stderr)
+
     panel0.set_xticklabels(empty_string_labels)
 
     # Print image(s)
@@ -535,10 +563,11 @@ def synplot(args):
     else:
         file_base = args.BASENAME
     transparent = args.TRANSPARENT
+    print(" - Running print_images.".format(gff), file = sys.stderr)
     print_images(
         base_output_name=file_base,
         image_formats=args.fileform,
-        no_timestamp = kwargs["no_timestamp"],
+        no_timestamp = args.no_timestamp,
         dpi=args.dpi,
         transparent=transparent)
 

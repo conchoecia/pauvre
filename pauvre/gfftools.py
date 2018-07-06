@@ -34,6 +34,7 @@ arrow_width = 80
 chevron_width = 40
 min_text = 550
 text_cutoff = 150
+import sys
 
 global colorMap
 colorMap = {'gene': 'green', 'CDS': 'green', 'tRNA':'pink', 'rRNA':'red',
@@ -304,6 +305,10 @@ def x_offset_gff(GFFParseobj, x_offset):
 
 def gffplot_horizontal(figure, panel, args, gff_object,
                        track_width=0.2, start_y=0.1, **kwargs):
+    """
+    this plots horizontal things from gff files. it was probably written for synplot,
+    as the browser does not use this at all.
+    """
     # Because this size should be relative to the circle that it is plotted next
     #  to, define the start_radius as the place to work from, and the width of
     #  each track.
@@ -320,6 +325,7 @@ def gffplot_horizontal(figure, panel, args, gff_object,
     plottable_features = gff_object.features.query("featType != 'tRNA' and featType != 'region' and featType != 'source'")
     plottable_features.reset_index(inplace=True, drop=True)
     print(plottable_features)
+
     len_plottable = len(plottable_features)
     print('len plottable', len_plottable)
     # - this for loop relies on the gff features to already be sorted
@@ -328,55 +334,92 @@ def gffplot_horizontal(figure, panel, args, gff_object,
     #   - It then looks to see if the next object (the jth) overlaps with the
     #     ith element.
     i = 0
-    while idone == False:
-        #print("im in the overlap-pairing while loop i={}".format(i))
-        # look ahead at all of the elements that overlap with the ith element
-        jdone = False
-        j = 1
-        this_set_minimum_index = i
-        this_set_maximum_index = i
-        while jdone == False:
-            #print("new i= {} j={} len={}".format(i, j, len_plottable))
-            #print(len_plottable)
-            #print(plottable_features)
-            # first make sure that we haven't gone off the end of the dataframe
-            # This is an edge case where i has a jth element that overlaps with it,
-            #  and j is the last element in the plottable features.
-            if i+j == len_plottable:
-                # this checks for the case that i is the last element of the
-                #  plottable features.
-                # In both of the above cases, we are done with both the ith and
-                #  the jth features.
-                if i == len_plottable-1:
-                    # this is the last analysis, so set idone to true
-                    #  to finish after this
-                    idone = True
-                    # the last one can't be in its own group, so just add it solo
-                    these_features = plottable_features.loc[this_set_minimum_index:this_set_maximum_index,].copy(deep=True)
-                    plot_order.append(these_features.reset_index(drop=True))
-                    break
-                jdone = True
-            else:
-                # if the lmost of the next gene overlaps with the rmost of
-                #  the current one, it overlaps and couple together
-                if plottable_features.loc[i+j, 'lmost'] < plottable_features.loc[i, 'rmost']:
-                    # note that this feature overlaps with the current
-                    this_set_maximum_index = i+j
-                    # ... and we need to look at the next in line
-                    j += 1
-                else:
-                    i += 1 + (this_set_maximum_index - this_set_minimum_index)
-                    #add all of the things that grouped together once we don't find any more groups
-                    these_features = plottable_features.loc[this_set_minimum_index:this_set_maximum_index,].copy(deep=True)
-                    plot_order.append(these_features.reset_index(drop=True))
-                    jdone = True
+    j = 1
+    while i < len(plottable_features):
+        if i + j == len(plottable_features):
+            #we have run off of the df and need to include everything from i to the end
+            these_features = plottable_features.loc[i::,].copy(deep=True)
+            these_features = these_features.reset_index()
+            print(these_features)
+            plot_order.append(these_features)
+            i = len(plottable_features)
+            break
+        print(" - i,j are currently: {},{}".format(i, j))
+        stop = plottable_features.loc[i]["stop"]
+        start = plottable_features.loc[i+j]["start"]
+        print("stop: {}. start: {}.".format(stop, start))
+        if plottable_features.loc[i]["stop"] <= plottable_features.loc[i+j]["start"]:
+            print("    - putting elements {} through (including) {} together".format(i, i+j))
+            these_features = plottable_features.loc[i:i+j-1,].copy(deep=True)
+            these_features = these_features.reset_index()
+            print(these_features)
+            plot_order.append(these_features)
+            i += 1
+            j = 1
+        else:
+            j += 1
+
+    #while idone == False:
+    #    print("im in the overlap-pairing while loop i={}".format(i))
+    #    # look ahead at all of the elements that overlap with the ith element
+    #    jdone = False
+    #    j = 1
+    #    this_set_minimum_index = i
+    #    this_set_maximum_index = i
+    #    while jdone == False:
+    #        print("new i= {} j={} len={}".format(i, j, len_plottable))
+    #        print("len plottable in jdone: {}".format(len_plottable))
+    #        print("plottable features in jdone:\n {}".format(plottable_features))
+    #        # first make sure that we haven't gone off the end of the dataframe
+    #        # This is an edge case where i has a jth element that overlaps with it,
+    #        #  and j is the last element in the plottable features.
+    #        if i+j == len_plottable:
+    #            print("i+j == len_plottable")
+    #            # this checks for the case that i is the last element of the
+    #            #  plottable features.
+    #            # In both of the above cases, we are done with both the ith and
+    #            #  the jth features.
+    #            if i == len_plottable-1:
+    #                print("i == len_plottable-1")
+
+    #                # this is the last analysis, so set idone to true
+    #                #  to finish after this
+    #                idone = True
+    #                # the last one can't be in its own group, so just add it solo
+    #                these_features = plottable_features.loc[this_set_minimum_index:this_set_maximum_index,].copy(deep=True)
+    #                plot_order.append(these_features.reset_index(drop=True))
+    #                break
+    #            jdone = True
+    #        else:
+    #            print("i+j != len_plottable")
+    #            # if the lmost of the next gene overlaps with the rmost of
+    #            #  the current one, it overlaps and couple together
+    #            if plottable_features.loc[i+j, 'lmost'] < plottable_features.loc[i, 'rmost']:
+    #                print("lmost < rmost")
+    #                # note that this feature overlaps with the current
+    #                this_set_maximum_index = i+j
+    #                # ... and we need to look at the next in line
+    #                j += 1
+    #            else:
+    #                print("lmost !< rmost")
+    #                i += 1 + (this_set_maximum_index - this_set_minimum_index)
+    #                #add all of the things that grouped together once we don't find any more groups
+    #                these_features = plottable_features.loc[this_set_minimum_index:this_set_maximum_index,].copy(deep=True)
+    #                plot_order.append(these_features.reset_index(drop=True))
+    #                jdone = True
+    #        print("plot order is now: {}".format(plot_order))
+    #        print("jdone: {}".format(str(jdone)))
 
     for feature_set in plot_order:
         # plot_feature_hori handles overlapping cases as well as normal cases
         panel, patches = gffplot_feature_hori(figure, panel, feature_set, colorMap,
                                               start_y, bar_thickness, text = True)
         for each in patches:
+            print("there are {} patches after gffplot_feature_hori".format(len(patches)))
+            print(each)
             myPatches.append(each)
+            print("length of myPatches is: {}".format(len(myPatches)))
+
     # Now we add all of the tRNAs to this to plot, do it last to overlay
     #  everything else
     tRNAs = gff_object.features.query("featType == 'tRNA'")
@@ -390,6 +433,7 @@ def gffplot_horizontal(figure, panel, args, gff_object,
                              tRNA_start_y, tRNA_bar_thickness, text = True)
         for patch in patches:
             myPatches.append(patch)
+    print("There are {} patches at the end of gffplot_horizontal()".format(len(myPatches)))
     return panel, myPatches
 
 def gffplot_feature_hori(figure, panel, feature_df,
@@ -437,6 +481,7 @@ def gffplot_feature_hori(figure, panel, feature_df,
                     Path.LINETO,
                     Path.CLOSEPOLY]
         path = Path(verts, codes)
+        print("normal path is: {}".format(path))
         # If the feature itself is smaller than the arrow, we need to take special measures to 
         if feature_df.loc[0,'width'] <= arrow_width:
             path = Path([verts[i] for i in [0,2,4,5]],
