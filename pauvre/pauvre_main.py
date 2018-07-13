@@ -50,6 +50,8 @@ class FullPathsList(argparse.Action):
 def run_subtool(parser, args):
     if args.command == 'browser':
         import pauvre.browser as submodule
+    elif args.command == 'custommargin':
+        import pauvre.custommargin as submodule
     elif args.command == 'marginplot':
         import pauvre.marginplot as submodule
     elif args.command == 'redwood':
@@ -172,6 +174,88 @@ def main():
                                 transparent background. Default is on.""")
     parser_browser.set_defaults(func=run_subtool)
 
+    ################
+    # custommargin
+    ################
+    parser_custmar = subparsers.add_parser('custommargin',
+                                          help='plot custom marginal histograms of tab-delimited files')
+    parser_custmar.add_argument('--dpi',
+                               metavar='dpi',
+                               default=600,
+                               type=int,
+                               help="""Change the dpi from the default 600
+                               if you need it higher""")
+    parser_custmar.add_argument('--fileform',
+                               dest='fileform',
+                               metavar='STRING',
+                               choices=['png', 'pdf', 'eps', 'jpeg', 'jpg',
+                                        'pdf', 'pgf', 'ps', 'raw', 'rgba',
+                                        'svg', 'svgz', 'tif', 'tiff'],
+                               default=['png'],
+                               nargs='+',
+                               help='Which output format would you like? Def.=png')
+    parser_custmar.add_argument('-i', '--input',
+                                action=FullPaths,
+                                help="""A tab-separated file with a header row
+                                of column names.""")
+    parser_custmar.add_argument('--xcol',
+                                type=str,
+                                help="""The column name of the data to plot on
+                                the x-axis""")
+    parser_custmar.add_argument('--ycol',
+                                type=str,
+                                help="""The column name of the data to plot on
+                                the y-axis""")
+    parser_custmar.add_argument('-n', '--no_transparent',
+                               action='store_false',
+                               help="""Specify this option if
+                               you don't want a transparent background. Default
+                               is on.""")
+    parser_custmar.add_argument("--no_timestamp",
+                                  action = 'store_true',
+                                  help="""Turn off time stamps in the filename
+                                  output.""")
+    parser_custmar.add_argument('-o', '--output_base_name',
+                               help='Specify a base name for the output file('
+                                    's). The input file base name is the '
+                                    'default.')
+    parser_custmar.add_argument('--plot_max_y',
+                               type=int,
+                               help="""Sets the maximum viewing area in the
+                               length dimension.""")
+    parser_custmar.add_argument('--plot_max_x',
+                               type=float,
+                               help="""Sets the maximum viewing area in the
+                               quality dimension.""")
+    parser_custmar.add_argument('--plot_min_y',
+                               type=int,
+                               default=0,
+                               help="""Sets the minimum viewing area in the
+                               length dimension.""")
+    parser_custmar.add_argument('--plot_min_x',
+                               type=float,
+                               default=0,
+                               help="""Sets the minimum viewing area in the
+                               quality dimension.""")
+    parser_custmar.add_argument('-t', '--title',
+                               type = str,
+                               help="""This sets the title for the whole plot.
+                               Use --title "Crustacean's DNA read quality"
+                               if you need single quote or apostrophe
+                               inside title.""")
+    parser_custmar.add_argument('--ybin',
+                               type=int,
+                               help="""This sets the bin size to use for length.""")
+    parser_custmar.add_argument('--xbin',
+                               type=float,
+                               help="""This sets the bin size to use for quality""")
+    parser_custmar.add_argument('-y', '--add-yaxes',
+                               dest='Y_AXES',
+                               action='store_true',
+                               help='Add Y-axes to both marginal histograms.')
+    parser_custmar.set_defaults(func=run_subtool)
+
+
     #############
     # marginplot
     #############
@@ -225,7 +309,7 @@ def main():
                                <length> = the length of the read
                                <numks> = the number of canonical kmers in the read
                                <kmers> = a list representation of kmers ie ['GAT', 'GTA']""")
-    parser_mnplot.add_argument('-n', '--no-transparent',
+    parser_mnplot.add_argument('-n', '--no_transparent',
                                dest='TRANSPARENT',
                                action='store_false',
                                help="""Specify this option if
@@ -235,7 +319,7 @@ def main():
                                   action = 'store_true',
                                   help="""Turn off time stamps in the filename
                                   output.""")
-    parser_mnplot.add_argument('-o', '--output-base-name',
+    parser_mnplot.add_argument('-o', '--output_base_name',
                                dest='BASENAME',
                                help='Specify a base name for the output file('
                                     's). The input file base name is the '
@@ -509,7 +593,6 @@ def main():
                                 the gff annotation includes the stop
                                 codons in the coding sequences.""")
     parser_synplot.add_argument('-T', '--transparent',
-                                dest='TRANSPARENT',
                                 action='store_false',
                                 help="""Specify this option if you DON'T want a
                                 transparent background. Default is on.""")
@@ -529,15 +612,14 @@ def main():
     # If there were no args, but someone selected a program,
     #  print the program's help.
     commandDict = {'browser': parser_browser.print_help,
-                   'redwood': parser_redwood.print_help,
+                   'custommargin': parser_custmar.print_help,
                    'marginplot': parser_mnplot.print_help,
+                   'redwood': parser_redwood.print_help,
                    'stats': parser_stats.print_help,
                    'synplot': parser_synplot.print_help}
 
-
     if len(sys.argv) == 2:
         commandDict[args.command]()
-
         sys.exit(1)
 
     if args.QUIET:
@@ -548,7 +630,6 @@ def main():
     except IOError as e:
         if e.errno != 32:  # ignore SIGPIPE
             raise
-
 
 if __name__ == "__main__":
     main()
