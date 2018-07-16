@@ -36,18 +36,17 @@ import codecs
 
 import warnings
 
-def print_images(base_output_name, image_formats, dpi,
-                 path=None, transparent=False, no_timestamp = False):
-    if base_output_name:
-        file_base = os.path.splitext(os.path.basename(base_output_name))[0]
+def print_images(base, image_formats, dpi,
+                 transparent=False, no_timestamp = False):
+    """
+    Save the plot in multiple formats, with or without transparency
+    and with or without timestamps.
+    """
     for fmt in image_formats:
-        if path:
-            out_name = path
+        if no_timestamp:
+            out_name = "{0}.{1}".format(base, fmt)
         else:
-            if no_timestamp:
-                out_name = "{0}.{1}".format(file_base, fmt)
-            else:
-                out_name = "{0}_{1}.{2}".format(file_base, timestamp(), fmt)
+            out_name = "{0}_{1}.{2}".format(base, timestamp(), fmt)
         try:
             if fmt == 'png':
                 plt.savefig(out_name, dpi=dpi, transparent=transparent)
@@ -57,7 +56,6 @@ def print_images(base_output_name, image_formats, dpi,
             # thanks to https://github.com/wdecoster for the suggestion
             print("""You don't have permission to save pauvre plots to this
             directory. Try changing the directory and running the script again!""")
-
 
 class GFFParse():
     def __init__(self, filename, stop_codons=None, species=None):
@@ -159,15 +157,14 @@ class GFFParse():
                     shuffle_features[shuffle_features['featType'].isin(['gene', 'rRNA', 'CDS'])]['name'])
                 if len(next_gene_df) != 0:
                     next_gene = next_gene_df[next_index]
-                    next_start = int(
-                        shuffle_features.loc[shuffle_features['name'] == next_gene, 'start'])
-                    print("looking at {}, prev_stop is {}, start is {}".format(
-                        next_gene, first_stop, next_start))
+                    next_start = int(shuffle_features.loc[shuffle_features['name'] == next_gene, 'start'])
+                    #print("looking at {}, prev_stop is {}, start is {}".format(
+                    #    next_gene, first_stop, next_start))
                     #print(shuffle_features[shuffle_features['featType'].isin(['gene', 'rRNA', 'CDS'])])
                     # if the gene we're looking at and the next one don't overlap, move on
                     if first_stop < next_start:
                         break
-            print("next_gene before checking for first is {}".format(next_gene))
+            #print("next_gene before checking for first is {}".format(next_gene))
             if next_gene == absolute_first:
                 done = True
                 break
@@ -176,7 +173,7 @@ class GFFParse():
             shuffle_features = shuffle_features.copy(deep=True)
             # figure out where the next start point is going to be
             next_start = int(shuffle_features.loc[shuffle_features['name'] == next_gene, 'start'])
-            print('next gene: {}'.format(next_gene))
+            #print('next gene: {}'.format(next_gene))
             shuffle_features['start'] = shuffle_features['start'] - next_start + 1
             shuffle_features['stop'] = shuffle_features['stop'] - next_start + 1
             shuffle_features['center'] = shuffle_features['center'] - next_start + 1
@@ -194,7 +191,7 @@ class GFFParse():
             new_copy = copy.deepcopy(self)
             new_copy.set_features(shuffle_features)
             shuffles.append(new_copy)
-        print("len shuffles: {}".format(len(shuffles)))
+        #print("len shuffles: {}".format(len(shuffles)))
         return shuffles
 
     def couple(self, other_GFF, this_y=0, other_y=1):
