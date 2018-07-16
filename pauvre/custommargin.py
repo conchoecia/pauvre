@@ -393,8 +393,6 @@ def custommargin(df, **kwargs):
 
     # Print image(s)
     if kwargs["output_base_name"] is None:
-        file_base = kwargs["output_base_name"]
-    elif kwargs["output_base_name"] is None:
         file_base = "custommargin"
     else:
         file_base = kwargs["output_base_name"]
