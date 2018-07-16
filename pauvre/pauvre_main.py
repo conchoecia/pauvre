@@ -194,7 +194,7 @@ def main():
                                default=['png'],
                                nargs='+',
                                help='Which output format would you like? Def.=png')
-    parser_custmar.add_argument('-i', '--input',
+    parser_custmar.add_argument('-i', '--input_file',
                                 action=FullPaths,
                                 help="""A tab-separated file with a header row
                                 of column names.""")
@@ -231,12 +231,12 @@ def main():
                                type=int,
                                default=0,
                                help="""Sets the minimum viewing area in the
-                               length dimension.""")
+                               length dimension. Default value = 0""")
     parser_custmar.add_argument('--plot_min_x',
                                type=float,
                                default=0,
                                help="""Sets the minimum viewing area in the
-                               quality dimension.""")
+                               quality dimension. Default value = 0""")
     parser_custmar.add_argument('-t', '--title',
                                type = str,
                                help="""This sets the title for the whole plot.
@@ -249,7 +249,7 @@ def main():
     parser_custmar.add_argument('--xbin',
                                type=float,
                                help="""This sets the bin size to use for quality""")
-    parser_custmar.add_argument('-y', '--add-yaxes',
+    parser_custmar.add_argument('--add-yaxes',
                                dest='Y_AXES',
                                action='store_true',
                                help='Add Y-axes to both marginal histograms.')
