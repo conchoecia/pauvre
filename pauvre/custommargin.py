@@ -32,6 +32,7 @@ from sys import stderr
 from pauvre.functions import print_images
 from pauvre.stats import stats
 import pauvre.rcparams as rc
+import sys
 import logging
 
 # logging
@@ -109,24 +110,24 @@ def _generate_histogram_bin_patches(panel, bins, bin_values, horizontal=True):
             panel.add_patch(hist_rectangle)
 
 
-def generate_histogram(panel, data_list, max_plot_length, min_plot_length,
+def generate_histogram(panel, data_list, min_plot_val, max_plot_val,
                        bin_interval, hist_horizontal=True,
                        left_spine=True, bottom_spine=True,
                        top_spine=False, right_spine=False, x_label=None,
                        y_label=None):
 
-    bins = np.arange(0, max_plot_length, bin_interval)
+    bins = np.arange(0, max_plot_val, bin_interval)
 
     bin_values, bins2 = np.histogram(data_list, bins)
 
     # hist_horizontal is used for quality
     if hist_horizontal:
-        panel.set_xlim([min_plot_length, max_plot_length])
+        panel.set_xlim([min_plot_val, max_plot_val])
         panel.set_ylim([0, max(bin_values * 1.1)])
     # and hist_horizontal == Fale is for read length
     else:
         panel.set_xlim([0, max(bin_values * 1.1)])
-        panel.set_ylim([min_plot_length, max_plot_length])
+        panel.set_ylim([min_plot_val, max_plot_val])
 
     # Generate histogram bin patches, depending on whether we're plotting
     # vertically or horizontally
@@ -143,31 +144,28 @@ def generate_histogram(panel, data_list, max_plot_length, min_plot_length,
         panel.set_xlabel(x_label)
 
 
-def generate_heat_map(panel, data_frame, min_plot_length, min_plot_qual,
-                      max_plot_length, max_plot_qual, color, **kwargs):
-    panel.set_xlim([min_plot_qual, max_plot_qual])
-    panel.set_ylim([min_plot_length, max_plot_length])
+def generate_heat_map(panel, data_frame, plot_min_y, plot_min_x,
+                      plot_max_y, plot_max_x, color,
+                      xcol, ycol, **kwargs):
+    panel.set_xlim([plot_min_x, plot_max_x])
+    panel.set_ylim([plot_min_y, plot_max_y])
 
-    if kwargs["kmerdf"]:
-        hex_this = data_frame.query('length<{} and numks<{}'.format(
-            max_plot_length, max_plot_qual))
-        # This single line controls plotting the hex bins in the panel
-        hex_vals = panel.hexbin(hex_this['numks'], hex_this['length'], gridsize=int(np.ceil(max_plot_qual/2)),
-                                linewidths=0.0, cmap=color)
+    querystring = "{}<={} and {}<={}".format(plot_min_y, ycol, plot_min_x, xcol)
+    print(" - Filtering hexmap with {}".format(querystring))
+    hex_this = data_frame.query(querystring)
 
-    else:
-        hex_this = data_frame.query('length<{} and meanQual<{}'.format(
-            max_plot_length, max_plot_qual))
+    querystring = "{}<{} and {}<{}".format(ycol, plot_max_y, xcol, plot_max_x)
+    print(" - Filtering hexmap with {}".format(querystring))
+    hex_this = hex_this.query(querystring)
 
-        # This single line controls plotting the hex bins in the panel
-        hex_vals = panel.hexbin(hex_this['meanQual'], hex_this['length'], gridsize=49,
+    # This single line controls plotting the hex bins in the panel
+    hex_vals = panel.hexbin(hex_this[xcol], hex_this[ycol], gridsize=49,
                             linewidths=0.0, cmap=color)
     for each in panel.spines:
         panel.spines[each].set_visible(False)
 
     counts = hex_vals.get_array()
     return counts
-
 
 def generate_legend(panel, counts, color):
     # completely custom for more control
@@ -189,11 +187,17 @@ def generate_legend(panel, counts, color):
     panel.spines['left'].set_visible(False)
     panel.spines['bottom'].set_visible(False)
     panel.yaxis.set_label_position("right")
-    panel.set_ylabel('Number of Reads')
+    panel.set_ylabel('count')
 
-def margin_plot(df, **kwargs):
+def custommargin(df, **kwargs):
     rc.update_rcParams()
 
+    # 250, 231, 34 light yellow
+    # 67, 1, 85
+    # R=np.linspace(65/255,1,101)
+    # G=np.linspace(0/255, 231/255, 101)
+    # B=np.linspace(85/255, 34/255, 101)
+    # R=65/255, G=0/255, B=85/255
     Rf = 65 / 255
     Bf = 85 / 255
     pdict = {'red': ((0.0, Rf, Rf),
@@ -223,7 +227,7 @@ def margin_plot(df, **kwargs):
     fig_left_margin = fig_bottom_margin = (1 / 6)
 
     # lengthPanel
-    length_panel_width = (1 / 8)
+    y_panel_width = (1 / 8)
 
     # the color Bar parameters
     legend_panel_width = (1 / 24)
@@ -233,52 +237,55 @@ def margin_plot(df, **kwargs):
     v_padding = 0.05
 
     # Set whether to include y-axes in histograms
+    print(" - Setting panel options.", file = sys.stderr)
     if kwargs["Y_AXES"]:
-        length_bottom_spine = True
-        length_bottom_tick = 'on'
-        length_bottom_label = 'on'
-        qual_left_spine = True
-        qual_left_tick = 'on'
-        qual_left_label = 'on'
-        qual_y_label = 'Count'
+        y_bottom_spine = True
+        y_bottom_tick = 'on'
+        y_bottom_label = 'on'
+        x_left_spine = True
+        x_left_tick = 'on'
+        x_left_label = 'on'
+        x_y_label = 'Count'
     else:
-        length_bottom_spine = False
-        length_bottom_tick = 'off'
-        length_bottom_label = 'off'
-        qual_left_spine = False
-        qual_left_tick = 'off'
-        qual_left_label = 'off'
-        qual_y_label = None
+        y_bottom_spine = False
+        y_bottom_tick = 'off'
+        y_bottom_label = 'off'
+        x_left_spine = False
+        x_left_tick = 'off'
+        x_left_label = 'off'
+        x_y_label = None
 
     panels = []
 
     # Quality histogram panel
-    qual_panel_left = fig_left_margin + length_panel_width + h_padding
-    qual_panel_width = heat_map_panel_width / fig_width
-    qual_panel_height = length_panel_width * fig_width / fig_height
-    qual_panel = generate_panel(qual_panel_left,
+    print(" - Generating the x-axis panel.", file = sys.stderr)
+    x_panel_left = fig_left_margin + y_panel_width + h_padding
+    x_panel_width = heat_map_panel_width / fig_width
+    x_panel_height = y_panel_width * fig_width / fig_height
+    x_panel = generate_panel(x_panel_left,
                                 fig_bottom_margin,
-                                qual_panel_width,
-                                qual_panel_height,
-                                left_tick_param=qual_left_tick,
-                                label_left_tick_param=qual_left_label)
-    panels.append(qual_panel)
+                                x_panel_width,
+                                x_panel_height,
+                                left_tick_param=x_left_tick,
+                                label_left_tick_param=x_left_label)
+    panels.append(x_panel)
 
-    # Length histogram panel
-    length_panel_bottom = fig_bottom_margin + qual_panel_height + v_padding
-    length_panel_height = heat_map_panel_height / fig_height
-    length_panel = generate_panel(fig_left_margin,
-                                  length_panel_bottom,
-                                  length_panel_width,
-                                  length_panel_height,
-                                  bottom_tick_param=length_bottom_tick,
-                                  label_bottom_tick_param=length_bottom_label)
-    panels.append(length_panel)
+    # y histogram panel
+    print(" - Generating the y-axis panel.", file = sys.stderr)
+    y_panel_bottom = fig_bottom_margin + x_panel_height + v_padding
+    y_panel_height = heat_map_panel_height / fig_height
+    y_panel = generate_panel(fig_left_margin,
+                                  y_panel_bottom,
+                                  y_panel_width,
+                                  y_panel_height,
+                                  bottom_tick_param=y_bottom_tick,
+                                  label_bottom_tick_param=y_bottom_label)
+    panels.append(y_panel)
 
     # Heat map panel
-    heat_map_panel_left = fig_left_margin + length_panel_width + h_padding
-    heat_map_panel_bottom = fig_bottom_margin + qual_panel_height + v_padding
-
+    heat_map_panel_left = fig_left_margin + y_panel_width + h_padding
+    heat_map_panel_bottom = fig_bottom_margin + x_panel_height + v_padding
+    print(" - Generating the heat map panel.", file = sys.stderr)
     heat_map_panel = generate_panel(heat_map_panel_left,
                                     heat_map_panel_bottom,
                                     heat_map_panel_width / fig_width,
@@ -291,9 +298,10 @@ def margin_plot(df, **kwargs):
     heat_map_panel.set_title(kwargs["title"])
 
     # Legend panel
-    legend_panel_left = fig_left_margin + length_panel_width + \
+    print(" - Generating the legend panel.", file = sys.stderr)
+    legend_panel_left = fig_left_margin + y_panel_width + \
         heat_map_panel_width / fig_width + h_padding
-    legend_panel_bottom = fig_bottom_margin + qual_panel_height + v_padding
+    legend_panel_bottom = fig_bottom_margin + x_panel_height + v_padding
     legend_panel_height = heat_map_panel_height / fig_height
     legend_panel = generate_panel(legend_panel_left, legend_panel_bottom,
                                   legend_panel_width, legend_panel_height,
@@ -305,88 +313,119 @@ def margin_plot(df, **kwargs):
                                   label_right_tick_param='on')
     panels.append(legend_panel)
 
-    # Set min and max viewing window for length
-    if kwargs["plot_maxlen"]:
-        max_plot_length = kwargs["plot_maxlen"]
+    #
+    # Everything above this is just to set up the panels
+    #
+    ##################################################################
+
+    # Set max and min viewing window for the xaxis
+    if kwargs["plot_max_x"]:
+        plot_max_x = kwargs["plot_max_x"]
     else:
-        max_plot_length = int(np.percentile(df['length'], 99))
-    min_plot_length = kwargs["plot_minlen"]
+        plot_max_x = max(np.ceil(df[kwargs["xcol"]]))
+    plot_min_x = kwargs["plot_min_x"]
 
-    # Set length bin sizes
-    if kwargs["lengthbin"]:
-        length_bin_interval = kwargs["lengthbin"]
-    else:
-        # Dividing by 80 is based on what looks good from experience
-        length_bin_interval = int(max_plot_length / 80)
-
-    # length_bins = np.arange(0, max_plot_length, length_bin_interval)
-
-    # Set max and min viewing window for quality
-    if kwargs["plot_maxqual"]:
-        max_plot_qual = kwargs["plot_maxqual"]
-    elif kwargs["kmerdf"]:
-        max_plot_qual = np.ceil(df["numks"].median() * 2)
-    else:
-        max_plot_qual = max(np.ceil(df['meanQual']))
-    min_plot_qual = kwargs["plot_minqual"]
-
-    # Set qual bin sizes
-    if kwargs["qualbin"]:
-        qual_bin_interval = kwargs["qualbin"]
-    elif kwargs["kmerdf"]:
-        qual_bin_interval = 1
+    # Set x bin sizes
+    if kwargs["xbin"]:
+        x_bin_interval = kwargs["xbin"]
     else:
         # again, this is just based on what looks good from experience
-        qual_bin_interval = max_plot_qual / 85
-    qual_bins = np.arange(0, max_plot_qual, qual_bin_interval)
+        x_bin_interval = 1
 
-    # Generate length histogram
-    generate_histogram(length_panel, df['length'], max_plot_length, min_plot_length,
-                       length_bin_interval, hist_horizontal=False,
-                       y_label='Read Length', bottom_spine=length_bottom_spine)
+    # Generate x histogram
+    print(" - Generating the x-axis histogram.", file = sys.stderr)
+    generate_histogram(panel = x_panel,
+                       data_list = df[kwargs['xcol']],
+                       min_plot_val = plot_min_x,
+                       max_plot_val = plot_max_x,
+                       bin_interval = x_bin_interval,
+                       hist_horizontal = True,
+                       x_label=kwargs['xcol'],
+                       y_label=x_y_label,
+                       left_spine=x_left_spine)
 
-    # Generate quality histogram
-    if kwargs["kmerdf"]:
-        generate_histogram(qual_panel, df['numks'], max_plot_qual, min_plot_qual,
-                           qual_bin_interval, x_label='number of kmers',
-                           y_label=qual_y_label, left_spine=qual_left_spine)
+    # Set max and min viewing window for the y axis
+    if kwargs["plot_max_y"]:
+        plot_max_y = kwargs["plot_max_y"]
     else:
-        generate_histogram(qual_panel, df['meanQual'], max_plot_qual, min_plot_qual,
-                           qual_bin_interval, x_label='Phred Quality',
-                           y_label=qual_y_label, left_spine=qual_left_spine)
+        plot_max_y = max(np.ceil(df[kwargs["ycol"]]))
+    plot_min_y = kwargs["plot_min_y"]
+    # Set y bin sizes
+    if kwargs["ybin"]:
+        y_bin_interval = kwargs["ybin"]
+    else:
+        y_bin_interval = 1000
+
+    # Generate y histogram
+    print(" - Generating the y-axis histogram.", file = sys.stderr)
+    generate_histogram(panel = y_panel,
+                       data_list = df[kwargs['ycol']],
+                       min_plot_val = plot_min_y,
+                       max_plot_val = plot_max_y,
+                       bin_interval = y_bin_interval,
+                       hist_horizontal = False,
+                       y_label = kwargs['ycol'],
+                       bottom_spine = y_bottom_spine)
 
     # Generate heat map
-    counts = generate_heat_map(heat_map_panel, df, min_plot_length, min_plot_qual,
-                               max_plot_length, max_plot_qual, purple1, kmerdf = kwargs["kmerdf"])
+    print(" - Generating the heatmap.", file = sys.stderr)
+    counts = generate_heat_map(panel = heat_map_panel,
+                               data_frame = df,
+                               plot_min_y = plot_min_y,
+                               plot_min_x = plot_min_x,
+                               plot_max_y = plot_max_y,
+                               plot_max_x = plot_max_x,
+                               color = purple1,
+                               xcol = kwargs["xcol"],
+                               ycol = kwargs["ycol"])
 
     # Generate legend
+    print(" - Generating the legend.", file = sys.stderr)
     generate_legend(legend_panel, counts, purple1)
 
     # inform the user of the plotting window if not quiet mode
-    if not kwargs["QUIET"]:
-        print("""plotting in the following window:
-        {0} <= Q-score (x-axis) <= {1}
-        {2} <= length  (y-axis) <= {3}""".format(
-            min_plot_qual, max_plot_qual, min_plot_length, max_plot_length),
-            file=stderr)
+    #if not kwargs["QUIET"]:
+    #    print("""plotting in the following window:
+    #    {0} <= Q-score (x-axis) <= {1}
+    #    {2} <= length  (y-axis) <= {3}""".format(
+    #        plot_min_x, plot_max_x, min_plot_val, max_plot_val),
+    #        file=stderr)
+
     # Print image(s)
-    if kwargs["BASENAME"] is None and not kwargs["path"] is None:
-        file_base = kwargs["BASENAME"]
-    elif kwargs["BASENAME"] is None:
-        file_base = opath.splitext(opath.basename(kwargs["fastq"]))[0]
+    if kwargs["output_base_name"] is None:
+        file_base = kwargs["output_base_name"]
+    elif kwargs["output_base_name"] is None:
+        file_base = "custommargin"
     else:
-        file_base = kwargs["BASENAME"]
-    if "path" in kwargs.keys():
-        path = kwargs["path"]
-    else:
-        path = None
+        file_base = kwargs["output_base_name"]
+
+    print(" - Saving your images", file = sys.stderr)
     print_images(
-        base_output_name=file_base,
+        base =file_base,
         image_formats=kwargs["fileform"],
         dpi=kwargs["dpi"],
         no_timestamp = kwargs["no_timestamp"],
-        path=path,
-        transparent=kwargs["TRANSPARENT"])
+        transparent= kwargs["no_transparent"])
 
 def run(args):
-    margin_plot(df=df.dropna(), **vars(args))
+    print(args)
+    if not opath.exists(args.input_file):
+        raise IOError("The input file does not exist: {}".format(
+            args.input_file))
+    df = pd.read_csv(args.input_file, header='infer', sep='\t')
+    # make sure that the column names that were specified are actually
+    #  in the dataframe
+    if args.xcol not in df.columns:
+        raise IOError("""The x-column name that you specified, {}, is not in the
+        dataframe column names: {}""".format(args.xcol, df.columns))
+    if args.ycol not in df.columns:
+        raise IOError("""The y-column name that you specified, {}, is not in the
+        dataframe column names: {}""".format(args.ycol, df.columns))
+    print(" - Successfully read csv file. Here are a few lines:",
+          file = sys.stderr)
+    print(df.head(), file = sys.stderr)
+    print(" - Plotting {} on the x-axis".format(args.xcol),file=sys.stderr)
+    print(df[args.xcol].head(), file = sys.stderr)
+    print(" - Plotting {} on the y-axis".format(args.ycol),file=sys.stderr)
+    print(df[args.ycol].head(), file = sys.stderr)
+    custommargin(df=df.dropna(), **vars(args))
