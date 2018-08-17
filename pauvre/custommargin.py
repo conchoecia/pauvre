@@ -143,6 +143,37 @@ def generate_histogram(panel, data_list, min_plot_val, max_plot_val,
     if x_label is not None:
         panel.set_xlabel(x_label)
 
+def generate_square_map(panel, data_frame, plot_min_y, plot_min_x,
+                      plot_max_y, plot_max_x, color,
+                      xcol, ycol, **kwargs):
+    """This generates the heatmap panels using squares. Everything is
+    quantized by ints.
+    """
+    panel.set_xlim([plot_min_x, plot_max_x])
+    panel.set_ylim([plot_min_y, plot_max_y])
+    tempdf = data_frame[[xcol, ycol]]
+    data_frame = tempdf.astype(int)
+
+    querystring = "{}<={} and {}<={}".format(plot_min_y, ycol, plot_min_x, xcol)
+    print(" - Filtering squares with {}".format(querystring))
+    square_this = data_frame.query(querystring)
+
+    querystring = "{}<{} and {}<{}".format(ycol, plot_max_y, xcol, plot_max_x)
+    print(" - Filtering squares with {}".format(querystring))
+    square_this = square_this.query(querystring)
+
+    counts = square_this.groupby([xcol, ycol]).size().reset_index(name='counts')
+    for index, row in counts.iterrows():
+        x_pos = row[xcol]
+        y_pos = row[ycol]
+        thiscolor = color(row["counts"]/(counts["counts"].max()))
+        rectangle1=mplpatches.Rectangle((x_pos,y_pos),1,1,
+                                        linewidth=0,\
+                                        facecolor=thiscolor)
+        panel.add_patch(rectangle1)
+
+    all_counts = counts["counts"]
+    return all_counts
 
 def generate_heat_map(panel, data_frame, plot_min_y, plot_min_x,
                       plot_max_y, plot_max_x, color,
@@ -322,6 +353,8 @@ def custommargin(df, **kwargs):
     if kwargs["plot_max_x"]:
         plot_max_x = kwargs["plot_max_x"]
     else:
+        if kwargs["square"]:
+            plot_max_x = df[kwargs["xcol"]].max()
         plot_max_x = max(np.ceil(df[kwargs["xcol"]]))
     plot_min_x = kwargs["plot_min_x"]
 
@@ -348,13 +381,17 @@ def custommargin(df, **kwargs):
     if kwargs["plot_max_y"]:
         plot_max_y = kwargs["plot_max_y"]
     else:
-        plot_max_y = max(np.ceil(df[kwargs["ycol"]]))
+        if kwargs["square"]:
+            plot_max_y = df[kwargs["ycol"]].max()
+        else:
+            plot_max_y = max(np.ceil(df[kwargs["ycol"]]))
+
     plot_min_y = kwargs["plot_min_y"]
     # Set y bin sizes
     if kwargs["ybin"]:
         y_bin_interval = kwargs["ybin"]
     else:
-        y_bin_interval = 1000
+        y_bin_interval = 1
 
     # Generate y histogram
     print(" - Generating the y-axis histogram.", file = sys.stderr)
@@ -368,16 +405,28 @@ def custommargin(df, **kwargs):
                        bottom_spine = y_bottom_spine)
 
     # Generate heat map
-    print(" - Generating the heatmap.", file = sys.stderr)
-    counts = generate_heat_map(panel = heat_map_panel,
-                               data_frame = df,
-                               plot_min_y = plot_min_y,
-                               plot_min_x = plot_min_x,
-                               plot_max_y = plot_max_y,
-                               plot_max_x = plot_max_x,
-                               color = purple1,
-                               xcol = kwargs["xcol"],
-                               ycol = kwargs["ycol"])
+    if kwargs["square"]:
+        print(" - Generating the square heatmap.", file = sys.stderr)
+        counts = generate_square_map(panel = heat_map_panel,
+                                   data_frame = df,
+                                   plot_min_y = plot_min_y,
+                                   plot_min_x = plot_min_x,
+                                   plot_max_y = plot_max_y,
+                                   plot_max_x = plot_max_x,
+                                   color = purple1,
+                                   xcol = kwargs["xcol"],
+                                   ycol = kwargs["ycol"])
+    else:
+        print(" - Generating the heatmap.", file = sys.stderr)
+        counts = generate_heat_map(panel = heat_map_panel,
+                                   data_frame = df,
+                                   plot_min_y = plot_min_y,
+                                   plot_min_x = plot_min_x,
+                                   plot_max_y = plot_max_y,
+                                   plot_max_x = plot_max_x,
+                                   color = purple1,
+                                   xcol = kwargs["xcol"],
+                                   ycol = kwargs["ycol"])
 
     # Generate legend
     print(" - Generating the legend.", file = sys.stderr)

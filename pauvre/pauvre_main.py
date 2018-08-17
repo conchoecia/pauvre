@@ -216,6 +216,7 @@ def main():
                                   help="""Turn off time stamps in the filename
                                   output.""")
     parser_custmar.add_argument('-o', '--output_base_name',
+                                default = None,
                                help='Specify a base name for the output file('
                                     's). The input file base name is the '
                                     'default.')
@@ -237,6 +238,10 @@ def main():
                                default=0,
                                help="""Sets the minimum viewing area in the
                                quality dimension. Default value = 0""")
+    parser_custmar.add_argument('--square',
+                               action='store_true',
+                               help="""changes the hexmap into a square
+                               map quantized by ints.""")
     parser_custmar.add_argument('-t', '--title',
                                type = str,
                                help="""This sets the title for the whole plot.
