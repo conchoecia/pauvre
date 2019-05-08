@@ -92,17 +92,17 @@ def shuffle_optimize_gffs(args, GFFs):
                     coords = firstgff.couple(shuf, this_y = 0, other_y = 1)
                     num_inters = len(intersection(coords))
                     obs_list.append((num_inters, i, shuf))
-                    print(obs_list[-1])
+                    #print(obs_list[-1])
             intersections, gffixs, shufs = zip(*obs_list)
             # get the index of the shuffled gff with the least number of
             #  intersections to the current one against which we are comparing
-            print("intersections", intersections)
+            #print("intersections", intersections)
             selected_ix = intersections.index(min(intersections))
             # save this gff to shuffled gffs to use later for plotting
             shuffled_gffs.append(shufs[selected_ix])
             # remove the origin of the shuffled gff from nextgffs
             del nextgffs[gffixs[selected_ix]]
-            print("global minimum was {} intersections".format(min(intersections)))
+            #print("global minimum was {} intersections".format(min(intersections)))
             # now update the firstgff to the latest shuffled one we collected
             firstgff = shufs[selected_ix]
     # plot the gff files in the order in which you input them,
@@ -148,7 +148,7 @@ def shuffle_optimize_gffs(args, GFFs):
         if args.sandwich:
             new_GFFs.append(new_GFFs[0])
         shuffles = [new_GFFs[i].shuffle() for i in range(len(new_GFFs))]
-        print([len(shuffles[i]) for i in range(len(shuffles))])
+        #print([len(shuffles[i]) for i in range(len(shuffles))])
         cumulative_least_shuffled_value = 999999999999999999999999999999999999
         bar = progressbar.ProgressBar()
         for combination in bar(list(product(*shuffles))):
@@ -255,6 +255,8 @@ def get_alignments(args):
     filelist = {os.path.splitext(x)[0]:os.path.join(os.path.abspath(args.aln_dir), x)
                    for x in os.listdir(args.aln_dir)
                    if os.path.splitext(x)[1]}
+    print("file list is:")
+    print(filelist)
     # one entry in seq_dict is:
     # {seqname: {"featType": featType,
     #            "seqs": {samplename: seq},
@@ -265,13 +267,12 @@ def get_alignments(args):
         thisFeatType = ""
         seqs_list    = {}
         indices_list = {}
-        print("We found the following samplenames: {}".format(args.samplenames),
-              file = sys.stderr)
+        #print("We found the following samplenames: {}".format(args.samplenames), file = sys.stderr)
         # this block handles reading in the fasta files to interpret the alignments
         for record in SeqIO.parse(filelist[genename], "fasta"):
             # get the sample name and make sure that the sample names match
             samplename = record.id.replace("_", " ").split()[0]
-            print("Looking at sample: {}".format(samplename), file=sys.stderr)
+            #print("Looking at sample: {}".format(samplename), file=sys.stderr)
             if samplename not in args.samplenames:
                 #if there's a sequence in the fasta that we did not specify
                 # in the command, ignore that sequence
@@ -329,6 +330,7 @@ def get_alignments(args):
 def plot_synteny(seq1, ind1, seq2, ind2, y1, y2,
                  featType, matrix, cm, seqname):
     """This function plots all the lines for each"""
+    print("PLOTTING SYNTENY")
     myPatches = []
     colormap = {"COX1": '#c0d9ef',
                    "L": '#e8f1df',
@@ -413,10 +415,11 @@ def synplot(args):
     # {seqname: {"featType": featType,
     #            "seqs": {samplename: seq},
     #            "indices": {samplename: indices}}
+    print("getting alignments")
     seqs_dict = get_alignments(args)
-
-    # now plot the lines as an example
-    plt.style.use('BME163')
+    print("done getting alignments")
+    print("seqs_dict is:")
+    print(seqs_dict)
 
     # set the figure dimensions
     if args.ratio:
@@ -431,7 +434,7 @@ def synplot(args):
         figHeight = 5
         #set the panel dimensions
         panelWidth = 2.5 * 3
-        panelHeight = 2.5
+        panelHeight = 1.75
 
     figure = plt.figure(figsize=(figWidth,figHeight))
 
@@ -481,7 +484,7 @@ def synplot(args):
                 for patch in myPatches:
                     allPatches.append(patch)
 
-    print("len allPatches", len(allPatches))
+    #print("len allPatches", len(allPatches))
     # this bit plots the simplified lines in the centers
     ## first we plot all the lines from the centers of matching genes.
     ##  This is temporary. Or maybe it should be a feature
@@ -498,28 +501,29 @@ def synplot(args):
     # now we plot horizontal lines showing the length of the mitochondrial sequence
     maxseqlen = 0
     # this is a heuristic for trackwidth of what looks good in my experience
+    track_multiplier = 0.08
     if args.ratio:
-        track_width = 0.062 * panelWidth
+        track_width = track_multiplier * panelWidth
     else:
         #0.032 if only 3
         #0.062 if 6
-        track_width = 0.062 * panelWidth
+        track_width = track_multiplier * panelWidth
     for i in range(len(optGFFs)):
         gff = optGFFs[i]
-        print(" - Plotting panels of {}".format(gff), file = sys.stderr)
+        #print(" - Plotting panels of {}".format(gff), file = sys.stderr)
         x_offset = 0
-        print("   - Detecting if centering is on.".format(gff), file = sys.stderr)
+        #print("   - Detecting if centering is on.".format(gff), file = sys.stderr)
         if args.center_on:
             x_offset = -1 * int(gff.features.loc[gff.features['name'] == args.center_on, 'center'])
             gff = gfftools.x_offset_gff(gff, x_offset)
-            print("     - Centering is on.".format(gff), file = sys.stderr)
-        print("   - Plotting horizontal portions with gffplot_horizontal.".format(gff), file = sys.stderr)
+            #print("     - Centering is on.".format(gff), file = sys.stderr)
+        #print("   - Plotting horizontal portions with gffplot_horizontal.".format(gff), file = sys.stderr)
         panel0, patches = gfftools.gffplot_horizontal(
             figure, panel0, args, gff,
             track_width = track_width,
             start_y = len(optGFFs) - i - 1 - ((0.9 * track_width)/2),
             x_offset = x_offset)
-        print("{} patches came out of gffplot_horizontal()".format(len(patches)))
+        #print("{} patches came out of gffplot_horizontal()".format(len(patches)))
         seq_name = gff.features['sequence'].unique()[0]
         if args.gff_labels:
             seq_name = "$\it{{{0}}}$".format(gff.species)
@@ -535,10 +539,10 @@ def synplot(args):
         #ys = [len(optGFFs) - i - 1 + (0.09/2)]*2
         ys = [len(optGFFs) - i - 1]*2
 
-        print("   - Plotting lines.".format(gff), file = sys.stderr)
+        #print("   - Plotting lines.".format(gff), file = sys.stderr)
         panel0.plot(xs, ys, color='black', zorder = -9)
-        print("   - Adding patches.".format(gff), file = sys.stderr)
-        print("Right before adding patches there are {} patches.".format(len(patches)))
+        #print("   - Adding patches.".format(gff), file = sys.stderr)
+        #print("Right before adding patches there are {} patches.".format(len(patches)))
         for i in range(len(patches)):
             patch = patches[i]
             allPatches.append(patch)
@@ -558,18 +562,18 @@ def synplot(args):
     panel0.set_xticklabels(empty_string_labels)
 
     # Print image(s)
+    print(" - Running print_images.".format(gff), file = sys.stderr)
     if args.BASENAME is None:
-        file_base = 'synteny_{}.png'.format(timestamp())
+        file_base = "synteny"
     else:
         file_base = args.BASENAME
-    transparent = args.TRANSPARENT
-    print(" - Running print_images.".format(gff), file = sys.stderr)
     print_images(
-        base_output_name=file_base,
+        base=file_base,
         image_formats=args.fileform,
         no_timestamp = args.no_timestamp,
         dpi=args.dpi,
-        transparent=transparent)
+        transparent=args.transparent)
+
 
 def run(args):
     synplot(args)
