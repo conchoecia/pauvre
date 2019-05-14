@@ -276,7 +276,7 @@ def plot_gff3(panel, chrid, start, stop, thiscmd):
                              region=(chrid, start, stop),
                              completely_within=False)
                      if thing.featuretype == "gene" ]
-    print("genes to plot are": genes_to_plot)
+    #print("genes to plot are: " genes_to_plot)
     panel.set_xlim([start, stop])
     # we don't need labels on one of the axes
     #panel.tick_params(bottom="off", labelbottom="off",
