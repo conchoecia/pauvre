@@ -38,8 +38,7 @@ setup(name='pauvre',
       long_description="""
           'pauvre' is a package for plotting Oxford Nanopore and other long read data.
           The name means 'poor' in French, a play on words to the oft-used 'pore' prefix
-          for similar packages. The current implementation of this package only plots
-          fastq quality. This package was designed for python 3, but it might work in
+          for similar packages. This package was designed for python 3, but it might work in
           python 2. You can visit the gitub page for more detailed information here:
           https://github.com/conchoecia/pauvre
       """,
