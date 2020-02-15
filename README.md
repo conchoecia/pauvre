@@ -25,6 +25,7 @@ This package currently hosts four scripts for plotting and/or printing stats.
     per circular genome and one directory of gene alignments.
 
 ## Updates:
+- 20200215 - v0.1.924 - Made some minor updates to work with python 3.7 and the latest version of pandas,
 - 20171130 - v0.1.86 - some changes by @wdecoster to integrate `pauvre` into [nanoplot](https://github.com/wdecoster/NanoPlot),
   as well as some formatting changes that *may* make `pauvre` work better with python2.7. Adding Travis-CI functionality.
 - 20171025 - v0.1.83 - added some changes to make marginplot interface

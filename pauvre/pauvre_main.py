@@ -329,10 +329,6 @@ def main():
                                help='Specify a base name for the output file('
                                     's). The input file base name is the '
                                     'default.')
-    parser_mnplot.add_argument('--path',
-                               type=str,
-                               help="""Set an explicit filepath for the output.
-                               Only do this if you have selected one output type.""")
     parser_mnplot.add_argument('--plot_maxlen',
                                type=int,
                                help="""Sets the maximum viewing area in the

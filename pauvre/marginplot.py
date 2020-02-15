@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# pauvre - just a pore PhD student's plotting package
-# Copyright (c) 2016-2017 Darrin T. Schultz. All rights reserved.
+# pauvre
+# Copyright (c) 2016-2020 Darrin T. Schultz.
 #
 # This file is part of pauvre.
 #
@@ -40,10 +40,10 @@ logger = logging.getLogger('pauvre')
 
 def generate_panel(panel_left, panel_bottom, panel_width, panel_height,
                    axis_tick_param='both', which_tick_param='both',
-                   bottom_tick_param='on', label_bottom_tick_param='on',
-                   left_tick_param='on', label_left_tick_param='on',
-                   right_tick_param='off', label_right_tick_param='off',
-                   top_tick_param='off', label_top_tick_param='off'):
+                   bottom_tick_param=True, label_bottom_tick_param=True,
+                   left_tick_param=True, label_left_tick_param=True,
+                   right_tick_param=False, label_right_tick_param=False,
+                   top_tick_param=False, label_top_tick_param=False):
     """
         Setting default panel tick parameters. Some of these are the defaults
         for matplotlib anyway, but specifying them for readability. Here are
@@ -52,8 +52,8 @@ def generate_panel(panel_left, panel_bottom, panel_width, panel_height,
         axis : {'x', 'y', 'both'}; which axis to modify; default = 'both'
         which : {'major', 'minor', 'both'}; which ticks to modify;
                 default = 'major'
-        bottom, top, left, right : bool or {'on', 'off'}; ticks on or off;
-        labelbottom, labeltop, labelleft, labelright : bool or {'on', 'off'}
+        bottom, top, left, right : bool or {True, False}; ticks on or off;
+        labelbottom, labeltop, labelleft, labelright : bool or {True, False}
      """
 
     # create the panel
@@ -243,19 +243,19 @@ def margin_plot(df, **kwargs):
     # Set whether to include y-axes in histograms
     if kwargs["Y_AXES"]:
         length_bottom_spine = True
-        length_bottom_tick = 'on'
-        length_bottom_label = 'on'
+        length_bottom_tick = False
+        length_bottom_label = True
         qual_left_spine = True
-        qual_left_tick = 'on'
-        qual_left_label = 'on'
+        qual_left_tick = True
+        qual_left_label = True
         qual_y_label = 'Count'
     else:
         length_bottom_spine = False
-        length_bottom_tick = 'off'
-        length_bottom_label = 'off'
+        length_bottom_tick = False
+        length_bottom_label = False
         qual_left_spine = False
-        qual_left_tick = 'off'
-        qual_left_label = 'off'
+        qual_left_tick = False
+        qual_left_label = False
         qual_y_label = None
 
     panels = []
@@ -291,26 +291,26 @@ def margin_plot(df, **kwargs):
                                     heat_map_panel_bottom,
                                     heat_map_panel_width / fig_width,
                                     heat_map_panel_height / fig_height,
-                                    bottom_tick_param='off',
-                                    label_bottom_tick_param='off',
-                                    left_tick_param='off',
-                                    label_left_tick_param='off')
+                                    bottom_tick_param=False,
+                                    label_bottom_tick_param=False,
+                                    left_tick_param=False,
+                                    label_left_tick_param=False)
     panels.append(heat_map_panel)
     heat_map_panel.set_title(kwargs["title"])
 
     # Legend panel
     legend_panel_left = fig_left_margin + length_panel_width + \
-        heat_map_panel_width / fig_width + h_padding
+        (heat_map_panel_width / fig_width) + (h_padding * 2)
     legend_panel_bottom = fig_bottom_margin + qual_panel_height + v_padding
     legend_panel_height = heat_map_panel_height / fig_height
     legend_panel = generate_panel(legend_panel_left, legend_panel_bottom,
                                   legend_panel_width, legend_panel_height,
-                                  bottom_tick_param='off',
-                                  label_bottom_tick_param='off',
-                                  left_tick_param='off',
-                                  label_left_tick_param='off',
-                                  right_tick_param='on',
-                                  label_right_tick_param='on')
+                                  bottom_tick_param       = False,
+                                  label_bottom_tick_param = False,
+                                  left_tick_param         = False,
+                                  label_left_tick_param   = False,
+                                  right_tick_param        = True,
+                                  label_right_tick_param  = True)
     panels.append(legend_panel)
 
     # Set min and max viewing window for length
@@ -384,16 +384,11 @@ def margin_plot(df, **kwargs):
         file_base = opath.splitext(opath.basename(kwargs["fastq"]))[0]
     else:
         file_base = kwargs["BASENAME"]
-    if "path" in kwargs.keys():
-        path = kwargs["path"]
-    else:
-        path = None
     print_images(
-        base_output_name=file_base,
+        file_base,
         image_formats=kwargs["fileform"],
         dpi=kwargs["dpi"],
         no_timestamp = kwargs["no_timestamp"],
-        path=path,
         transparent=kwargs["TRANSPARENT"])
 
 def run(args):
