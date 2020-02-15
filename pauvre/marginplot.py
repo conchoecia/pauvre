@@ -378,9 +378,7 @@ def margin_plot(df, **kwargs):
             min_plot_qual, max_plot_qual, min_plot_length, max_plot_length),
             file=stderr)
     # Print image(s)
-    if kwargs["BASENAME"] is None and not kwargs["path"] is None:
-        file_base = kwargs["BASENAME"]
-    elif kwargs["BASENAME"] is None:
+    if kwargs["BASENAME"] is None:
         file_base = opath.splitext(opath.basename(kwargs["fastq"]))[0]
     else:
         file_base = kwargs["BASENAME"]
