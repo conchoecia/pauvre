@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# pauvre 
+# pauvre
 # Copyright (c) 2016-2020 Darrin T. Schultz.
 #
 # This file is part of pauvre.
@@ -28,11 +28,9 @@ from setuptools import setup, find_packages
 
 version_py = os.path.join(os.path.dirname(__file__), 'pauvre', 'version.py')
 version = open(version_py).read().strip().split('=')[-1].replace('"', '').strip()
-print(version)
 
 
 setup(name='pauvre',
-      requires=['python (>3.0)'],
       version=version,
       description='Tools for plotting Oxford Nanopore and other long-read data.',
       long_description="""
@@ -42,7 +40,6 @@ setup(name='pauvre',
           python 2. You can visit the gitub page for more detailed information here:
           https://github.com/conchoecia/pauvre
       """,
-
       url='https://github.com/conchoecia/pauvre',
       author='Darrin Schultz',
       author_email='dts@ucsc.edu',
@@ -50,14 +47,13 @@ setup(name='pauvre',
           'Development Status :: 2 - Pre-Alpha',
           'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
           'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6',
+          'Programming Language :: Python :: 3.7',
           'Operating System :: POSIX :: Linux',
           'Topic :: Scientific/Engineering :: Bio-Informatics',
-          'Intended Audience :: Science/Research'
+          'Intended Audience :: Science/Research',
       ],
-      license='GPLv3',
-      provides=['pauvre'],
-      packages=find_packages() + ['scripts'],
+      packages=find_packages(),
       python_requires='>=3',
       install_requires=[
           "matplotlib >= 2.0.2",
@@ -65,7 +61,7 @@ setup(name='pauvre',
           "pandas >= 0.20.1",
           "numpy >= 1.12.1",
           "scipy",
-          "sklearn"
+          "scikit-learn",
       ],
       entry_points={
           'console_scripts': ['pauvre=pauvre.pauvre_main:main'],
