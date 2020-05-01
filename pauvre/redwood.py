@@ -703,7 +703,7 @@ def redwood(args):
     end = time.time()
     print(end - start)
     # Print image(s)
-    ifargs.BASENAME is None:
+    if args.BASENAME is None:
         file_base = "redwood"
     else:
         file_base = args.BASENAME
