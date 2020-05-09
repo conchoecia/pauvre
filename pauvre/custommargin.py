@@ -30,6 +30,7 @@ import pandas as pd
 import os.path as opath
 from sys import stderr
 from pauvre.functions import print_images
+from pauvre.marginplot import generate_panel
 from pauvre.stats import stats
 import pauvre.rcparams as rc
 import sys
@@ -37,44 +38,6 @@ import logging
 
 # logging
 logger = logging.getLogger('pauvre')
-
-
-def generate_panel(panel_left, panel_bottom, panel_width, panel_height,
-                   axis_tick_param='both', which_tick_param='both',
-                   bottom_tick_param='on', label_bottom_tick_param='on',
-                   left_tick_param='on', label_left_tick_param='on',
-                   right_tick_param='off', label_right_tick_param='off',
-                   top_tick_param='off', label_top_tick_param='off'):
-    """
-        Setting default panel tick parameters. Some of these are the defaults
-        for matplotlib anyway, but specifying them for readability. Here are
-        options and defaults for the parameters used below:
-
-        axis : {'x', 'y', 'both'}; which axis to modify; default = 'both'
-        which : {'major', 'minor', 'both'}; which ticks to modify;
-                default = 'major'
-        bottom, top, left, right : bool or {'on', 'off'}; ticks on or off;
-        labelbottom, labeltop, labelleft, labelright : bool or {'on', 'off'}
-     """
-
-    # create the panel
-    panel_rectangle = [panel_left, panel_bottom, panel_width, panel_height]
-    panel = plt.axes(panel_rectangle)
-
-    # Set tick parameters
-    panel.tick_params(axis=axis_tick_param,
-                      which=which_tick_param,
-                      bottom=bottom_tick_param,
-                      labelbottom=label_bottom_tick_param,
-                      left=left_tick_param,
-                      labelleft=label_left_tick_param,
-                      right=right_tick_param,
-                      labelright=label_right_tick_param,
-                      top=top_tick_param,
-                      labeltop=label_top_tick_param)
-
-    return panel
-
 
 def _generate_histogram_bin_patches(panel, bins, bin_values, horizontal=True):
     """This helper method generates the histogram that is added to the panel.
@@ -271,19 +234,19 @@ def custommargin(df, **kwargs):
     print(" - Setting panel options.", file = sys.stderr)
     if kwargs["Y_AXES"]:
         y_bottom_spine = True
-        y_bottom_tick = 'on'
-        y_bottom_label = 'on'
+        y_bottom_tick = True
+        y_bottom_label = True
         x_left_spine = True
-        x_left_tick = 'on'
-        x_left_label = 'on'
+        x_left_tick = True
+        x_left_label = True
         x_y_label = 'Count'
     else:
         y_bottom_spine = False
-        y_bottom_tick = 'off'
-        y_bottom_label = 'off'
+        y_bottom_tick = False
+        y_bottom_label = False
         x_left_spine = False
-        x_left_tick = 'off'
-        x_left_label = 'off'
+        x_left_tick = False
+        x_left_label = False
         x_y_label = None
 
     panels = []
@@ -336,12 +299,12 @@ def custommargin(df, **kwargs):
     legend_panel_height = heat_map_panel_height / fig_height
     legend_panel = generate_panel(legend_panel_left, legend_panel_bottom,
                                   legend_panel_width, legend_panel_height,
-                                  bottom_tick_param='off',
-                                  label_bottom_tick_param='off',
-                                  left_tick_param='off',
-                                  label_left_tick_param='off',
-                                  right_tick_param='on',
-                                  label_right_tick_param='on')
+                                  bottom_tick_param=False,
+                                  label_bottom_tick_param=False,
+                                  left_tick_param=False,
+                                  label_left_tick_param=False,
+                                  right_tick_param=True,
+                                  label_right_tick_param=True)
     panels.append(legend_panel)
 
     #

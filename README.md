@@ -1,12 +1,39 @@
 [![travis-ci](https://travis-ci.org/conchoecia/pauvre.svg?branch=master)](https://travis-ci.org/conchoecia/pauvre) [![DOI](https://zenodo.org/badge/112774670.svg)](https://zenodo.org/badge/latestdoi/112774670)
 
+## <a name="started"></a>Getting Started
 
-## pauvre: a plotting package designed for nanopore and PacBio long reads
+```
+pauvre custommargin -i custom.tsv --ycol length --xcol qual # Custom tsv input
+```
 
-This package currently hosts four scripts for plotting and/or printing stats.
+## Table of Contents
+
+- [Getting Started](#started)
+- [Users' Guide](#uguide)
+- [Installation](#installation)
+  - [Requirements](#reqs)
+  - [Install Instructions](#install)
+- [Usage](#usage)
+  - [pauvre stats](#stats)
+  - [pauvre marginplot](#marginplot)
+    - [Basic Usage](#marginbasic)
+    - [Plot Adjustments](#marginadjustments)
+    - [Specialized Options](#marginspecialized)
+- [Contributors](#contributors)
+
+## <a name="uguide"></a>Users' Guide
+
+Pauvre is a plotting package originally designed to help QC the length and
+quality distribution of Oxford Nanopore or PacBio reads. The main outputs
+are marginplots.  Now, `pauvre` also hosts other additional data plotting
+scripts.
+
+This package currently hosts five scripts for plotting and/or printing stats.
 
 - `pauvre marginplot`
   - takes a fastq file as input and outputs a marginal histogram with a heatmap.
+- `pauvre custommargin`
+  - takes a tsv as input and outputs a marginal histogram with custom columns of your choice.
 - `pauvre stats`
   - Takes a fastq file as input and prints out a table of stats, including how many basepairs/reads there are for a length/mean quality cutoff.
   - This is also automagically called when using `pauvre marginplot`
@@ -24,7 +51,10 @@ This package currently hosts four scripts for plotting and/or printing stats.
     genomes with the fewest crossings-over. Input is one `.gff` file
     per circular genome and one directory of gene alignments.
 
-# Requirements
+
+## <a name="installation"></a>Installation
+
+### <a name="reqs"></a>Requirements
 
 - You must have the following installed on your system to install this software:
   - python 3.x
@@ -33,8 +63,7 @@ This package currently hosts four scripts for plotting and/or printing stats.
   - pandas
   - pillow
 
-# Installation
-
+### <a name="install">Install Instructions
 - Instructions to install on your mac or linux system. Not sure on
   Windows! Make sure *python 3* is the active environment before
   installing.
@@ -44,9 +73,9 @@ This package currently hosts four scripts for plotting and/or printing stats.
 - Or, install with pip
   - `pip3 install pauvre`
 
-# Usage
+## <a name="usage"><a/>Usage
 
-## `stats`
+### <a name="stats"></a>`stats`
   - generate basic statistics about the fastq file. For example, if I
     want to know the number of bases and reads with AT LEAST a PHRED
     score of 5 and AT LEAST a read length of 500, run the program as below
@@ -78,9 +107,9 @@ minLen    Q0   Q5  Q10  Q15  Q17.5  Q20  Q21.5  Q25  Q25.5  Q30
  et cetera...
 ```
 
-##  `marginplot`
+###  <a name="marginplot"></a>`marginplot`
 
-### Basic usage
+#### <a name="marginbasic"></a>Basic Usage
 - automatically calls `pauvre stats` for each fastq file
 - Make the default plot showing the 99th percentile of longest reads
   - `pauvre marginplot --fastq miniDSMN15.fastq`
@@ -90,28 +119,27 @@ minLen    Q0   Q5  Q10  Q15  Q17.5  Q20  Q21.5  Q25  Q25.5  Q30
   - `pauvre marginplot --maxlen 4000 --maxqual 25 --lengthbin 50 --fileform pdf png --qualbin 0.5 --fastq miniDSMN15.fastq`
   - ![example1](files/miniDSMN15.png)
 
-### Filter reads and adjust viewing window
+#### <a name="marginadjustments"></a>Plot Adjustments
+
 - Filter out reads with a mean quality less than 5, and a length
   less than 800. Zoom in to plot only mean quality of at least 4 and
   read length at least 500bp.
   - `pauvre marginplot -f miniDSMN15.fastq --filt_minqual 5 --filt_minlen 800 -y --plot_minlen 500 --plot_minqual 4`
   - ![test4](files/test4.png)
 
-### Specialized Options
+#### <a name="marginspecialized"></a>Specialized Options
 
 - Plot ONT 1D data with a large tail
   - `pauvre marginplot --maxlen 100000 --maxqual 15 --lengthbin 500  <myfile>.fastq`
 - Get more resolution on lengths
   - `pauvre marginplot --maxlen 100000 --lengthbin 5  <myfile>.fastq`
 
-### Transparency
-
 - Turn off transparency if you just want a white background
   - `pauvre marginplot --transparent False <myfile>.fastq`
   - Note: transparency is the default behavior
     - ![transparency](files/transparency.001.jpeg)
 
-# Contributors
+## <a name="contributors"></a>Contributors
 
 @conchoecia (Darrin Schultz)
 @mebbert (Mark Ebbert)

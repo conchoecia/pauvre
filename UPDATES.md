@@ -1,4 +1,5 @@
 ## Updates:
+- 20200508 - v0.2.2   - Minor changes to custommargin to make it work with newer matplotlib
 - 20200501 - v0.2.1   - Minor changes related to setting matplotlib params
 - 20200215 - v0.1.924 - Made some minor updates to work with python 3.7 and the latest version of pandas,
 - 20171130 - v0.1.86 - some changes by @wdecoster to integrate `pauvre` into [nanoplot](https://github.com/wdecoster/NanoPlot),
