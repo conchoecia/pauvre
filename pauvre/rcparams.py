@@ -21,8 +21,6 @@ def update_rcParams():
         'ytick.minor.pad'      : 2        ,
         'savefig.dpi'          : 601      ,
         'axes.linewidth'       : 0.75     ,
-        'text.usetex'          : False    ,
         "image.composite_image": False   ,
         "pdf.fonttype"         : 42,
         "ps.fonttype"          : 42  })
-
