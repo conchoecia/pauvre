@@ -180,7 +180,7 @@ def black_colormap():
 def translate(value, left_min, left_max, right_min, right_max):
     """This code maps values from the left range and interpolates to the
     corresponding range on the right. This is used to translate the amino acid
-    substition matrix scores to a scale between 0 and 1 for making alphamaps.
+    substitution matrix scores to a scale between 0 and 1 for making alphamaps.
 
     I don't know if this works if the directionality of the ranges are swapped.
       IE [5, -10] mapped to [0, 1]

@@ -1018,7 +1018,7 @@ def plot_gff(args, panelCircle, gff_path, radius):
                                      family = 'monospace',
                                      color = 'white')
                 # this block handles the case where the text is too small to put
-                #  parallel with the mitochondrial circle, so it is perpindicular
+                #  parallel with the mitochondrial circle, so it is perpendicular
                 else:
                     if print_count == 0:
                         if gffParser.features.loc[i,'strand'] == '+':
