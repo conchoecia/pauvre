@@ -49,7 +49,6 @@ import time
 
 # Biopython stuff
 from Bio import SeqIO
-import Bio.SubsMat.MatrixInfo as MI
 
 
 class PlotCommand:
