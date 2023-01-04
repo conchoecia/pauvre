@@ -268,7 +268,7 @@ int bio_getrec(char **pbuf, int *psize, int isrecord)
 
 	int i, c, saveb0, dret, bufsize = *psize, savesize = *psize;
 	char *p, *buf = *pbuf;
-	if (g_firsttime) { /* mimicing initgetrec() in lib.c */
+	if (g_firsttime) { /* mimicking initgetrec() in lib.c */
 		g_firsttime = 0;
 		for (i = 1; i < *ARGC; i++) {
 			p = getargv(i); /* find 1st real filename */
