@@ -43,7 +43,7 @@ from itertools import product
 
 # Biopython stuff
 from Bio import SeqIO
-import Bio.SubsMat.MatrixInfo as MI
+from Bio.Align import substitution_matrices
 
 # following this tutorial to install helvetica
 # https://github.com/olgabot/sciencemeetproductivity.tumblr.com/blob/master/posts/2012/11/how-to-set-helvetica-as-the-default-sans-serif-font-in.md
@@ -171,8 +171,9 @@ def shuffle_optimize_gffs(args, GFFs):
 def black_colormap():
     zeroone = np.linspace(0, 1, 100)
     colorrange = [(0,0,0,x) for x in zeroone]
-    minblosum = min(MI.blosum62.values())
-    maxblosum = max(MI.blosum62.values())
+    blosumvals = substitution_matrices.load("BLOSUM62").values()
+    minblosum = int(min(blosumvals))
+    maxblosum = int(max(blosumvals))
     colormap = {i: colorrange[int(translate(i, minblosum, maxblosum, 0, 99))]
                 for i in range(minblosum, maxblosum + 1, 1)}
     return colormap
@@ -478,8 +479,9 @@ def synplot(args):
                 y1 = len(optGFFs) - 1 - i
                 # this needs to be increased by the bar_thickness (0.9 * track_width in this case, or 0.09)
                 y2 = len(optGFFs) - 2 - i
+                blosum = substitution_matrices.load("BLOSUM62")
                 myPatches = plot_synteny(seq1, ind1, seq2, ind2, y1, y2,
-                                         featType, MI.blosum62, cm, seqname)
+                                         featType, blosum, cm, seqname)
                 for patch in myPatches:
                     allPatches.append(patch)
 
