@@ -527,7 +527,7 @@ def synplot(args):
         #print("{} patches came out of gffplot_horizontal()".format(len(patches)))
         seq_name = gff.features['sequence'].unique()[0]
         if args.gff_labels:
-            seq_name = "$\it{{{0}}}$".format(gff.species)
+            seq_name = r"$\it{{{0}}}$".format(gff.species)
         panel0.text(0 + x_offset, len(optGFFs) - i - 1 + (0.18/2),
                     seq_name, fontsize = 12,
                     ha='left', va='bottom',
