@@ -72,8 +72,8 @@ class GFFParse():
         self.features = pd.read_csv(self.filename, comment='#',
                                     sep='\t', names=gffnames)
         self.features['name'] = self.features['tags'].apply(self._get_name)
-        self.features.drop('dunno1', 1, inplace=True)
-        self.features.drop('dunno2', 1, inplace=True)
+        self.features.drop('dunno1', axis=1, inplace=True)
+        self.features.drop('dunno2', axis=1, inplace=True)
         self.features.reset_index(inplace=True, drop=True)
         # warn the user if there are CDS or gene entries not divisible by three
         self._check_triplets()
