@@ -175,7 +175,7 @@ def _plot_left_to_right_introns_top(panel, geneid, db, y_pos, text = None):
     return panel
 
 def _plot_lff(panel, left_df, right_df, colorMap, y_pos, bar_thickness, text):
-    """ plots a lff patch
+    r""" plots a lff patch
       1__________2      ____________
       | #lff      \     \ #rff      \
       | left for   \3     \ right for \
@@ -256,7 +256,7 @@ def _plot_label(panel, df, y_pos, bar_thickness, rotate = False, arrow = False):
     return panel
 
 def _plot_rff(panel, left_df, right_df, colorMap, y_pos, bar_thickness, text):
-    """ plots a rff patch
+    r""" plots a rff patch
       ____________      1__________2
       | #lff      \     \ #rff      \
       | left for   \    6\ right for \3
